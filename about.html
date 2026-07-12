@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bruno Eid — About</title>
+<script>
+  document.documentElement.style.backgroundColor = '#ffffff';
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:wght@400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: #ffffff;
+    font-family: "Instrument Sans", sans-serif;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 20px;
+  }
+
+  .titulo {
+    text-align: center;
+  }
+
+  .titulo h1 {
+    margin: 0;
+    color: #1B1B1B;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 37px;
+    font-weight: 700;
+    line-height: normal;
+    text-decoration: none;
+  }
+
+  .titulo h1 a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .titulo p {
+    margin: 0;
+    color: #9F9F9F;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: normal;
+    text-transform: uppercase;
+  }
+
+  /* ── LINHAS DE GRELHA ── */
+  .grade {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ── LAYOUT PRINCIPAL ── */
+  .conteudo {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1.7fr 1fr 0.8fr;
+    align-items: center;
+    padding: 100px 60px 40px 100px;
+    gap: 40px;
+  }
+
+  /* ── IMAGEM ── */
+  .col-foto {
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  #facets-img {
+    width: 100%;
+    max-height: calc(100vh - 140px);
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+  }
+
+  /* ── ANO ── */
+  .col-ano {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ano {
+    color: #DBDBDB;
+    font-family: "Instrument Serif", serif;
+    font-size: 81px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    text-align: center;
+    user-select: none;
+    opacity: 1;
+    transition: opacity 0.4s ease;
+  }
+
+  /* ── TEXTO ── */
+  .col-texto {
+    display: flex;
+    align-items: center;
+  }
+
+  .descricao {
+    color: #1B1B1B;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 20px;
+    margin: 0;
+    opacity: 1;
+    transition: opacity 0.4s ease;
+  }
+
+  /* ── ROLE PARA BAIXO ── */
+  .role-baixo {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+  }
+
+  .role-baixo p {
+    margin: 0;
+    color: #BBBBBB;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── TRANSIÇÃO ── */
+  .page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #1b1b1b;
+    clip-path: circle(0% at 50% 100%);
+    pointer-events: none;
+    transition: clip-path 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+  }
+
+  .page-transition-overlay.cobrir {
+    clip-path: circle(150% at 50% 100%);
+  }
+
+  @media (max-width: 1000px) {
+    .titulo h1 { font-size: clamp(18px, 3vw, 37px); }
+    .conteudo { grid-template-columns: 1.2fr 1fr 0.8fr; padding: 100px 20px 20px 20px; gap: 20px; }
+    .ano { font-size: clamp(40px, 6vw, 81px); }
+  }
+  @media (max-width: 700px) {
+    .conteudo {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      align-items: start;
+      padding: 90px 16px 16px;
+      gap: 16px;
+    }
+    /* imagem ocupa a linha inteira no topo */
+    .col-foto {
+      grid-column: 1 / -1;
+      height: auto;
+      justify-content: center;
+    }
+    #facets-img { max-height: 40vh; width: auto; }
+    /* ano e texto ficam lado a lado, centrados na célula */
+    .col-ano { align-items: center; justify-content: center; }
+    .col-texto { align-items: center; justify-content: center; }
+    .ano { font-size: clamp(38px, 9vw, 64px); text-align: center; }
+    .descricao { font-size: 16px; text-align: center; }
+    .titulo h1 { font-size: 20px; }
+    .header { padding: 12px; }
+    .role-baixo p { font-size: 9px; }
+    .role-baixo svg { width: 14px; height: 6px; }
+    .role-baixo { gap: 5px; bottom: 16px; }
+  }
+</style>
+
+<script src="cursor.js" defer></script>
+</head>
+<body>
+  <svg class="grade" xmlns="http://www.w3.org/2000/svg" width="842" height="532" viewBox="0 0 842 532" fill="none">
+    <path d="M1 0V540.857M841 0V540.857M211 1.74121V542.598M631 0V540.857M421 1.74121V542.598" stroke="url(#paint0_linear_112_209)" stroke-width="2"/>
+    <defs>
+      <linearGradient id="paint0_linear_112_209" x1="454.75" y1="0" x2="454.75" y2="540.857" gradientUnits="userSpaceOnUse">
+        <stop stop-color="white"/>
+        <stop offset="1" stop-color="#EDEDED"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <div class="page-transition-overlay" id="page-transition"></div>
+  <script>
+  (function() {
+    var overlay = document.getElementById('page-transition');
+    if (!overlay) return;
+    if (sessionStorage.getItem('pageTransition') === '1') {
+      sessionStorage.removeItem('pageTransition');
+      overlay.style.transition = 'none';
+      overlay.classList.add('cobrir');
+      overlay.offsetHeight;
+      overlay.style.transition = '';
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { overlay.classList.remove('cobrir'); });
+      });
+    }
+    window.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('a.page-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          var url = link.getAttribute('href');
+          sessionStorage.setItem('pageTransition', '1');
+          overlay.classList.add('cobrir');
+          setTimeout(function() { window.location.href = url; }, 900);
+        });
+      });
+    });
+  })();
+  </script>
+
+  <header class="header">
+    <!-- Botão voltar -->
+    <a href="home.html" class="page-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" fill="none">
+        <circle cx="22.5" cy="22.5" r="22.5" fill="#1B1B1B"/>
+        <path d="M23.2788 13H29L20.7212 23L29 33H23.2788L15 23L23.2788 13Z" fill="white"/>
+      </svg>
+    </a>
+
+    <!-- Título central -->
+    <div class="titulo">
+      <h1><a href="index.html" class="page-link">BRUNO EID</a></h1>
+      <p>Status Nascendi</p>
+    </div>
+
+    <!-- Botão direito (página preta) -->
+    <a href="devaneios-about.html" class="page-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <circle cx="22.5" cy="37.5" r="22.5" fill="#1B1B1B"/>
+        <circle cx="37.5" cy="22.5" r="22.5" fill="#1B1B1B"/>
+        <rect x="25" y="25" width="10" height="10" fill="white"/>
+      </svg>
+    </a>
+  </header>
+
+  <main class="conteudo">
+    <div class="col-foto">
+      <img id="facets-img" src="facets/Port p mai.png" alt="Bruno Eid">
+    </div>
+
+    <div class="col-ano">
+      <span class="ano" id="ano-texto">2005</span>
+    </div>
+
+    <div class="col-texto">
+      <p class="descricao" id="descricao-texto">Nasci em uma cidade<br>pequena no Brasil</p>
+    </div>
+  </main>
+
+  <div class="role-baixo" id="role-baixo">
+    <p>role para baixo</p>
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="8" viewBox="0 0 20 8" fill="none">
+      <path d="M-1.43324e-07 3.72113L-3.49692e-07 -2.38419e-05L10 4.27885L20 -2.47161e-05L20 3.72113L10 8L-1.43324e-07 3.72113Z" fill="#BBBBBB"/>
+    </svg>
+  </div>
+
+<script>
+  var images = [
+    'Port p mai.png','Port p mai1.png','Port p mai2.png','Port p mai3.png',
+    'Port p mai4.png','Port p mai5.png','Port p mai6.png','Port p mai7.png',
+    'Port p mai8.png','Port p mai9.png','Port p mai10.png','Port p mai11.png',
+    'Port p mai12.png','Port p mai13.png','Port p mai14.png','Port p mai15.png',
+    'Port p mai16.png'
+  ];
+  var idx = 0;
+  var img = document.getElementById('facets-img');
+  setInterval(function() {
+    idx = (idx + 1) % images.length;
+    img.src = 'facets/' + images[idx];
+  }, 1000);
+
+  var chapters = [
+    { year: '2005', text: 'Nasci em uma cidade<br>pequena no Brasil' },
+    { year: '2016', text: 'Mudei de escola para<br>uma cidade maior' },
+    { year: '2020', text: 'Descobri meu interesse<br>em desenho' },
+    { year: '2022', text: 'Decidi ser designer' },
+    { year: '2023', text: 'Fui para Portugal<br>estudar design' },
+    { year: '2025', text: 'Fui para Barcelona e conheci<br>o designer de interação' }
+  ];
+  var chapterIdx = 0;
+  var anoEl = document.getElementById('ano-texto');
+  var descEl = document.getElementById('descricao-texto');
+  var scrollLocked = false;
+  var LOCK_MS = 1100; // tempo total bloqueado por troca: dá tempo de ler antes de aceitar o próximo scroll
+  var roleBaixo = document.getElementById('role-baixo');
+
+  function atualizarRoleBaixo() {
+    if (!roleBaixo) return;
+    var fimDoScroll = chapterIdx === chapters.length - 1;
+    roleBaixo.style.opacity = fimDoScroll ? '0' : '1';
+  }
+
+  function irPara(novoIdx) {
+    if (novoIdx === chapterIdx || novoIdx < 0 || novoIdx >= chapters.length || scrollLocked) return;
+    scrollLocked = true;
+
+    anoEl.style.opacity = '0';
+    descEl.style.opacity = '0';
+
+    setTimeout(function() {
+      chapterIdx = novoIdx;
+      anoEl.innerHTML = chapters[chapterIdx].year;
+      descEl.innerHTML = chapters[chapterIdx].text;
+      anoEl.style.opacity = '1';
+      descEl.style.opacity = '1';
+      atualizarRoleBaixo();
+    }, 400);
+
+    setTimeout(function() { scrollLocked = false; }, LOCK_MS);
+  }
+
+  var DELTA_MIN = 8; // ignora tremores mínimos de trackpad
+
+  window.addEventListener('wheel', function(e) {
+    if (scrollLocked) return;
+    if (Math.abs(e.deltaY) < DELTA_MIN) return;
+    if (e.deltaY > 0) irPara(chapterIdx + 1);
+    else irPara(chapterIdx - 1);
+  }, { passive: true });
+</script>
+</body>
+</html>

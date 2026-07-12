@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breu</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  .intro-video-container {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    padding: 10vw 24vw;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #intro-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  #scroll-indicator {
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  #scroll-indicator.visible {
+    opacity: 1;
+  }
+
+  .scrollable-page { background-color: #000; margin: 0; }
+
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 20px;
+    pointer-events: none;
+  }
+
+  .header a { pointer-events: auto; }
+
+  .titulo { text-align: center; }
+
+  .titulo h1 {
+    margin: 0;
+    color: #ffffff;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 37px;
+    font-weight: 700;
+    line-height: normal;
+  }
+
+  .titulo h1 a { color: inherit; text-decoration: none; }
+
+  .titulo p {
+    margin: 0;
+    color: rgba(255,255,255,0.5);
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: normal;
+    text-transform: uppercase;
+  }
+
+  .page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #1b1b1b;
+    clip-path: circle(0% at 50% 100%);
+    pointer-events: none;
+    transition: clip-path 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+  }
+
+  .page-transition-overlay.cobrir { clip-path: circle(150% at 50% 100%); }
+  .intro-wrapper { height: 150vh; width: 100%; }
+  .marquee-container { width: 100%; overflow: hidden; padding: 0; }
+  .marquee { display: flex; width: max-content; }
+  .marquee span { font-size: 6rem; font-family: 'Breu', sans-serif; color: white; line-height: 0.85; cursor: default; transition: color 0.3s ease; }
+  .scroll-wrapper { height: 400vh; position: relative; z-index: 1; }
+  .sticky-container { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+  .horizontal-content { display: flex; width: 300%; transition: transform 0.1s ease-out; }
+  /* ── SLIDES ── */
+  .slide { width: 100%; height: 100vh; position: relative; display: flex; }
+
+  /* Slide 1 – texto esquerda + imagem direita */
+  .slide-1 { align-items: stretch; }
+  .slide-1 .s1-text { flex: 0 0 42%; display: flex; flex-direction: column; justify-content: flex-start; padding: 80px 60px 60px 60px; gap: 16px; }
+  .slide-1 .s1-img { flex: 1; display: flex; align-items: center; justify-content: flex-start; }
+  .slide-1 .s1-img img { height: 65vh; max-height: 580px; width: 55vw; max-width: 800px; object-fit: cover; margin-left: -200px; }
+  .s1-title { color: white; font-family: 'Helvetica', sans-serif; font-size: 4rem; font-weight: 700; margin: 0; line-height: 1; }
+  .s1-sub { color: rgba(255,255,255,0.7); font-family: 'Helvetica', sans-serif; font-size: 1.1rem; margin: 0; line-height: 1.5; }
+
+  /* Slide 2 – vídeo centrado + texto em baixo */
+  .slide-2 { justify-content: center; align-items: center; }
+  .slide-2 video { height: 78vh; width: auto; max-width: 70%; display: block; }
+  .s2-bl { position: absolute; bottom: 48px; left: 60px; color: white; font-family: 'Helvetica', sans-serif; font-size: 2.4rem; font-weight: 700; margin: 0; }
+  .s2-br { position: absolute; bottom: 48px; right: 60px; color: white; font-family: 'Helvetica', sans-serif; font-size: 2.4rem; font-weight: 700; margin: 0; }
+
+  /* Slide 3 – texto cantos + imagem centro */
+  .slide-3 { justify-content: center; align-items: center; }
+  .slide-3 img { height: 78vh; width: auto; max-width: 80%; display: block; object-fit: contain; }
+  .s3-tl { position: absolute; top: 120px; left: 60px; color: white; font-family: 'Helvetica', sans-serif; font-size: 2.4rem; font-weight: 700; margin: 0; }
+  .s3-br { position: absolute; bottom: 48px; right: 60px; color: white; font-family: 'Helvetica', sans-serif; font-size: 2.4rem; font-weight: 700; margin: 0; }
+  .section-mockups { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; position: relative; background: #000; z-index: 10; }
+  #mockup-container { position: relative; width: 90%; height: 90%; overflow: hidden; }
+  .mockup-img { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); max-width: 90%; max-height: 90%; opacity: 0; transition: opacity 0.4s ease, transform 0.8s cubic-bezier(0.16,1,0.3,1); pointer-events: none; }
+  .mockup-img.active { opacity: 1; transform: translate(-50%,-50%) scale(1.02); }
+  #mockup-ui { position: absolute; bottom: 20px; left: 20px; font-family: sans-serif; color: white; font-weight: bold; letter-spacing: 2px; }
+
+  @media (max-width: 1400px) {
+    .s1-sub { max-width: 260px; }
+  }
+
+  @media (max-width: 1150px) and (min-width: 1001px) {
+    .slide-1 .s1-text { flex: 0 0 48%; }
+  }
+
+  @media (max-width: 1000px) {
+    .titulo h1 { font-size: clamp(18px, 3vw, 37px); }
+    .intro-video-container { padding: 6vw 10vw; }
+    .slide-1 .s1-text { flex: 0 0 45%; padding: 140px 30px 40px 30px; }
+    .slide-1 .s1-img img { height: 50vh; width: 50vw; margin-left: -100px; }
+    .s1-title { font-size: clamp(1.4rem, 3.5vw, 4rem); white-space: nowrap; }
+    .s1-title br { display: none; }
+    .s1-sub { max-width: 240px; }
+    .s2-bl, .s2-br { font-size: clamp(1.1rem, 2.2vw, 2.4rem); bottom: 28px; }
+    .s2-bl { left: 30px; } .s2-br { right: 30px; }
+    .s3-tl { font-size: clamp(1.1rem, 2.2vw, 2.4rem); top: 100px; left: 30px; }
+    .s3-br { font-size: clamp(1.1rem, 2.2vw, 2.4rem); bottom: 28px; right: 30px; }
+    .slide-3 img { height: 60vh; }
+    .slide-2 video { height: 60vh; max-width: 90%; }
+    .marquee span { font-size: 4rem; }
+  }
+  .closing-section {
+    position: relative;
+    z-index: 1;
+    background: #000;
+    padding: 140px 8%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    text-align: center;
+  }
+
+  .closing-credit {
+    margin: 0;
+    max-width: 640px;
+    color: rgba(255,255,255,0.7);
+    font-family: "Instrument Sans", sans-serif;
+    font-weight: 500;
+    font-size: clamp(1rem, 1.4vw, 1.2rem);
+    line-height: 1.6;
+  }
+
+  .closing-back {
+    color: #ffffff;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    border-bottom: 1px solid #ffffff;
+    padding-bottom: 2px;
+  }
+
+  @media (max-width: 700px) {
+    .slide-1 { flex-direction: column; }
+    .slide-1 .s1-text { flex: none; width: 100%; padding: 120px 20px 20px 20px; }
+    .slide-1 .s1-img { width: 100%; justify-content: center; }
+    .slide-1 .s1-img img { height: 40vh; width: 90vw; margin-left: 0; }
+    .s1-title { font-size: 1.6rem; }
+    .s2-bl, .s2-br { font-size: 1rem; }
+    .slide-2 video { height: 50vh; max-width: 95%; }
+    .slide-3 img { height: 50vh; }
+    .s3-tl { top: 80px; left: 20px; }
+    .marquee span { font-size: 2.5rem; }
+    .titulo h1 { font-size: 18px; }
+  }
+</style>
+<script src="cursor.js" defer></script>
+</head>
+<body class="scrollable-page">
+  <div class="page-transition-overlay" id="page-transition"></div>
+  <script>
+  (function() {
+    var overlay = document.getElementById('page-transition');
+    if (!overlay) return;
+    if (sessionStorage.getItem('pageTransition') === '1') {
+      sessionStorage.removeItem('pageTransition');
+      overlay.style.transition = 'none';
+      overlay.classList.add('cobrir');
+      overlay.offsetHeight;
+      overlay.style.transition = '';
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { overlay.classList.remove('cobrir'); });
+      });
+    }
+    window.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('a.page-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          var url = link.getAttribute('href');
+          sessionStorage.setItem('pageTransition', '1');
+          overlay.classList.add('cobrir');
+          setTimeout(function() { window.location.href = url; }, 900);
+        });
+      });
+    });
+  })();
+  </script>
+
+  <header class="header">
+    <a href="projects.html" class="page-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" fill="none">
+        <circle cx="22.5" cy="22.5" r="22.5" fill="white"/>
+        <path d="M23.2788 13H29L20.7212 23L29 33H23.2788L15 23L23.2788 13Z" fill="#1B1B1B"/>
+      </svg>
+    </a>
+
+    <div class="titulo">
+      <h1><a href="index.html" class="page-link">BRUNO EID</a></h1>
+      <p>Breu</p>
+    </div>
+
+    <a href="devaneios-breu.html" class="page-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <circle cx="22.5" cy="37.5" r="22.5" fill="white"/>
+        <circle cx="37.5" cy="22.5" r="22.5" fill="white"/>
+        <rect x="25" y="25" width="10" height="10" fill="#1B1B1B"/>
+      </svg>
+    </a>
+  </header>
+
+    <div class="intro-wrapper">
+        <div class="intro-video-container">
+            <video src="Breu port 4.mp4" autoplay muted id="intro-video"></video>
+            <svg id="scroll-indicator" class="visible" xmlns="http://www.w3.org/2000/svg" width="253" height="31" viewBox="0 0 253 31" fill="none">
+              <path d="M1.5 1.5H251M103 18.5L120 28.315L137 18.5" stroke="white" stroke-opacity="0.7" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+        </div>
+    </div>
+
+    <div class="marquee-container">
+        <div class="marquee">
+            <span>NIGHT#MOON#BATMAN#DARK#SILENCE#</span>
+            <span>NIGHT#MOON#BATMAN#DARK#SILENCE#</span>
+        </div>
+    </div>
+    <div class="marquee-container">
+        <div class="marquee">
+            <span>LUA#NOITE#SAUDADE#SILENCIO#TEMPO#</span>
+            <span>LUA#NOITE#SAUDADE#SILENCIO#TEMPO#</span>
+        </div>
+    </div>
+    <div class="marquee-container">
+        <div class="marquee">
+            <span>CIDADE#SEGUNDOS#LUZ#SOLITUDE#</span>
+            <span>CIDADE#SEGUNDOS#LUZ#SOLITUDE#</span>
+        </div>
+    </div>
+
+    <div class="scroll-wrapper">
+        <div class="sticky-container">
+            <div class="horizontal-content">
+
+                <!-- SLIDE 1: texto esquerda / imagem direita -->
+                <div class="slide slide-1">
+                    <div class="s1-text">
+                        <p class="s1-title">Type born from<br> shadow.</p>
+                        <p class="s1-sub">Inspired by archival images of the İzmir International Fair.</p>
+                    </div>
+                    <div class="s1-img">
+                        <img src="PHOTO-2026-03-24-15-36-51.png" alt="Poster Breu">
+                    </div>
+                </div>
+
+                <!-- SLIDE 2: vídeo centrado / texto em baixo -->
+                <div class="slide slide-2">
+                    <video src="Breu port 2.mp4" autoplay muted loop></video>
+                    <p class="s2-bl">From structure to form.</p>
+                    <p class="s2-br">From shadow to letter.</p>
+                </div>
+
+                <!-- SLIDE 3: textos nos cantos / imagem centro -->
+                <div class="slide slide-3">
+                    <p class="s3-tl">Built from negative space.</p>
+                    <img src="imagem negative breu.png" alt="Negative space">
+                    <p class="s3-br">Letters emerge from absence.</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <section class="section-mockups">
+        <div id="mockup-container">
+                            <img src="Breu Mockup 2.jpg" class="mockup-img active" id="img-1">
+                            <img src="Breu Mockup 5.jpg" class="mockup-img" id="img-2">
+                            <img src="Breu mockup 6.jpg" class="mockup-img" id="img-3">
+                            <img src="Breu mockup 8.jpg" class="mockup-img" id="img-4">
+                            <img src="Breu mockup 10.jpg" class="mockup-img" id="img-5">
+                            <img src="Breu posteres.png" class="mockup-img" id="img-6">
+                            
+                            <div id="mockup-ui">
+                                <span id="mockup-name">247</span>
+                            </div>
+                        </div>
+                    </section>
+
+    <section class="closing-section">
+        <p class="closing-credit">Tipografia criada na cadeira de tipografia no primeiro ano em Design na UA.</p>
+        <a href="projects.html" class="page-link closing-back">Voltar a projectos.</a>
+    </section>
+
+<script>
+const scrollWrapper = document.querySelector('.scroll-wrapper');
+const horizontalContent = document.querySelector('.horizontal-content');
+const marquees = document.querySelectorAll('.marquee');
+const marqueeData = Array.from(marquees).map((m, i) => ({
+    element: m,
+    position: 0,
+    baseDirection: i === 1 ? -1 : 1
+}));
+
+let direction = 1;
+let speed = 0.5;
+let speedTimeout;
+
+const scrollController = () => {
+    const scrollWrapperTop = scrollWrapper.offsetTop;
+    const scrollWrapperHeight = scrollWrapper.offsetHeight;
+    const windowHeight = window.innerHeight;
+    const windowScrollTop = window.scrollY;
+
+    if (windowScrollTop >= scrollWrapperTop && windowScrollTop <= scrollWrapperTop + scrollWrapperHeight - windowHeight) {
+        const scrollPercentage = (windowScrollTop - scrollWrapperTop) / (scrollWrapperHeight - windowHeight);
+        const newPosition = -scrollPercentage * (horizontalContent.scrollWidth - window.innerWidth);
+        horizontalContent.style.transform = `translateX(${newPosition}px)`;
+    }
+};
+
+const animateMarquee = () => {
+    marqueeData.forEach(data => {
+        data.position += speed * direction * data.baseDirection;
+        if (data.position > 0) {
+            data.position = -data.element.scrollWidth / 2;
+        } else if (data.position < -data.element.scrollWidth / 2) {
+            data.position = 0;
+        }
+        data.element.style.transform = `translateX(${data.position}px)`;
+    });
+    requestAnimationFrame(animateMarquee);
+};
+
+window.addEventListener('wheel', (event) => {
+    direction = event.deltaY < 0 ? -1 : 1;
+    speed = 1.8;
+    clearTimeout(speedTimeout);
+    speedTimeout = setTimeout(() => { speed = 0.5; }, 200);
+});
+
+window.addEventListener('scroll', scrollController);
+setTimeout(scrollController, 100);
+animateMarquee();
+
+const mockupContainer = document.getElementById('mockup-container');
+const mockupImages = document.querySelectorAll('.mockup-img');
+const mockupNameLabel = document.getElementById('mockup-name');
+const nomesProjetos = ["247", "NOITE", "MOON", "PANTHER", "EDITORIAL", "POSTER"];
+let indexAtivo = 0;
+
+if (mockupContainer) {
+    mockupContainer.addEventListener('mousemove', (e) => {
+        const rect = mockupContainer.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = (e.clientY - rect.top) / rect.height;
+        const totalFotos = mockupImages.length;
+        const novoIndex = Math.min(Math.floor(x * totalFotos), totalFotos - 1);
+
+        if (novoIndex !== indexAtivo) {
+            mockupImages[indexAtivo].classList.remove('active');
+            mockupImages[novoIndex].classList.add('active');
+            mockupNameLabel.innerText = nomesProjetos[novoIndex];
+            indexAtivo = novoIndex;
+        }
+ 
+        const imgAtiva = mockupImages[indexAtivo];
+        const moveX = (x - 0.5) * 40;
+        const moveY = (y - 0.5) * 40;
+        imgAtiva.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px)) scale(1.05)`;
+    });
+
+    mockupContainer.addEventListener('mouseleave', () => {
+        mockupImages[indexAtivo].style.transform = `translate(-50%, -50%) scale(1.02)`;
+    });
+}
+
+const scrollIndicator = document.getElementById('scroll-indicator');
+
+window.addEventListener('scroll', () => {
+    if (scrollIndicator && window.scrollY > 10) {
+        scrollIndicator.classList.remove('visible');
+    }
+
+    const introContainer = document.querySelector('.intro-video-container');
+    if (introContainer) {
+        const maxScroll = window.innerHeight * 0.5;
+        const progress = Math.max(0, Math.min(window.scrollY / maxScroll, 1));
+        const paddingH = window.innerWidth <= window.innerHeight ? 10 : 24;
+        introContainer.style.padding = `${10 - 10 * progress}vw ${paddingH - paddingH * progress}vw`;
+    }
+});
+</script>
+</body>
+</html>

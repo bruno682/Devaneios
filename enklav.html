@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enklav</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #1B1B1B; }
+
+    .page-header {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+        display: flex; align-items: flex-start; justify-content: space-between;
+        padding: 20px; pointer-events: none;
+    }
+    .page-header a { pointer-events: auto; }
+    .page-titulo { text-align: center; }
+    .page-titulo h1 { margin: 0; color: #ffffff; font-family: "Instrument Sans", sans-serif; font-size: 37px; font-weight: 700; line-height: normal; transition: color 0.4s ease; }
+    .page-titulo h1 a { color: inherit; text-decoration: none; }
+    .page-titulo p { margin: 0; color: rgba(255,255,255,0.7); font-family: "Instrument Sans", sans-serif; font-size: 14px; font-weight: 600; line-height: normal; text-transform: uppercase; transition: color 0.4s ease; }
+    .page-transition-overlay { position: fixed; inset: 0; z-index: 99999; background: #1b1b1b; clip-path: inset(0 0 100% 0); pointer-events: none; transition: clip-path 0.9s cubic-bezier(0.76, 0, 0.24, 1); }
+    .page-transition-overlay.cobrir { clip-path: inset(0 0 0% 0); }
+
+    /* ── HEADER MUDA DE COR AO SAIR DA HERO ESCURA ── */
+    .btn-back svg circle, .btn-back svg path,
+    .btn-right svg circle, .btn-right svg rect { transition: fill 0.4s ease; }
+    .header-scrolled .page-titulo h1 { color: #1B1B1B; }
+    .header-scrolled .page-titulo p { color: rgba(27,27,27,0.6); }
+    .header-scrolled .btn-back svg circle { fill: #1B1B1B; }
+    .header-scrolled .btn-back svg path  { fill: #ffffff; }
+    .header-scrolled .btn-right svg circle { fill: #1B1B1B; }
+    .header-scrolled .btn-right svg rect   { fill: #ffffff; }
+
+    #enklav-fullscreen {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+    }
+    #enklav-fullscreen img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    #enklav-final {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+    }
+    #enklav-final img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: left top;
+        transform: scale(1.2) translateY(-12%);
+        transform-origin: top left;
+    }
+    .enklav-final-text {
+        position: absolute;
+        top: 100px;
+        left: 8%;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 2px;
+        text-align: left;
+        pointer-events: none;
+    }
+    .enklav-final-line {
+        margin: 0;
+        color: #ffffff;
+        font-family: "Instrument Sans", sans-serif;
+        font-size: clamp(2rem, 6vw, 5rem);
+        font-weight: 700;
+        line-height: 1.05;
+        text-transform: uppercase;
+    }
+
+    /* ── SECÇÃO DE DETALHES — lista + telemóvel ── */
+    #enklav-details { position: relative; background: #ffffff; }
+    #enklav-details .enklav-sticky {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 40px;
+        padding: 0 8%;
+    }
+    #enklav-nav-viewport {
+        position: relative;
+        height: 320px;
+        overflow: hidden;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%);
+        mask-image: linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%);
+    }
+    #enklav-nav-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        will-change: transform;
+    }
+    #enklav-nav-list li {
+        color: #D5D5D5;
+        font-family: "Instrument Sans", sans-serif;
+        font-size: clamp(1.6rem, 3vw, 2.6rem);
+        font-weight: 600;
+        line-height: 1.15;
+    }
+    #enklav-phone-stack {
+        position: relative;
+        flex-shrink: 0;
+        width: min(400px, 40vw);
+        aspect-ratio: 870 / 1599;
+    }
+    .enklav-phone-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+    .enklav-phone-img.active { opacity: 1; }
+
+    @media (max-width: 700px) {
+        #enklav-details .enklav-sticky { flex-direction: column-reverse; justify-content: center; padding: 0 6%; gap: 24px; }
+        #enklav-phone-stack { width: min(280px, 70vw); }
+        #enklav-nav-viewport { height: 200px; }
+        #enklav-nav-list li { font-size: clamp(1.2rem, 6vw, 1.8rem); }
+    }
+
+    /* ── VÍDEO — cresce até ocupar a tela toda conforme o scroll ── */
+    #enklav-video-section { position: relative; background: #ffffff; }
+    #enklav-video-scroll { height: 220vh; position: relative; }
+    #enklav-video-sticky {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+    }
+    #enklav-video-wrapper {
+        position: relative;
+        margin-left: auto;
+        overflow: hidden;
+        width: 55%;
+        height: 60vh;
+        will-change: width, height;
+    }
+    #enklav-video-wrapper video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .enklav-video-overlay {
+        position: absolute;
+        left: 24px;
+        bottom: 24px;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        cursor: pointer;
+        transition: opacity 0.3s ease;
+    }
+    .enklav-video-overlay.is-hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+    #enklav-video-wrapper video::-webkit-media-controls-timeline,
+    #enklav-video-wrapper video::-webkit-media-controls-panel {
+        z-index: 3;
+    }
+    .enklav-video-play { display: flex; flex-shrink: 0; }
+    .enklav-video-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-family: "Instrument Sans", sans-serif;
+        color: #ffffff;
+    }
+    .enklav-video-time { font-size: 14px; font-weight: 700; }
+    .enklav-video-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.8; }
+
+    @media (max-width: 700px) {
+        #enklav-video-wrapper { width: 78%; height: 42vh; }
+        .enklav-video-play svg { width: 28px; height: 28px; }
+        .enklav-video-time { font-size: 12px; }
+        .enklav-video-label { font-size: 10px; }
+    }
+
+    /* ── JORNADA — svg centrado, texto sobreposto no topo ── */
+    #enklav-journey {
+        position: relative;
+        background: #3A4839;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 0 8% 220px;
+    }
+    .enklav-journey-text {
+        position: absolute;
+        top: 220px;
+        left: 8%;
+        z-index: 2;
+        max-width: min(560px, 42vw);
+        text-align: left;
+    }
+    .enklav-journey-heading {
+        margin: 0 0 20px;
+        color: #ffffff;
+        font-family: "Instrument Sans", sans-serif;
+        font-size: clamp(1.8rem, 3.2vw, 2.8rem);
+        font-weight: 700;
+        line-height: 1.25;
+    }
+    .enklav-journey-desc {
+        margin: 0;
+        max-width: 320px;
+        color: rgba(255,255,255,0.7);
+        font-family: "Instrument Sans", sans-serif;
+        font-size: clamp(0.95rem, 1.2vw, 1.1rem);
+        font-weight: 400;
+        line-height: 1.6;
+    }
+    .enklav-journey-svg { position: relative; z-index: 1; width: min(1200px, 98vw); height: auto; overflow: visible; }
+    /* Base line sits dim (25%) at all times — this is the "not yet passed" state. A second
+       copy of the same shape (the <use> right after it) is revealed on top, pure white at
+       100% opacity, by a mask whose stroke-dashoffset tracks scroll progress: the "passed"
+       portion. Selector is scoped to the fill path's id so it doesn't dim the mask's own
+       (invisible) stroke path used purely to drive the reveal. */
+    #enklavJourneyFillPath {
+        opacity: 0.25;
+    }
+    .enklav-journey-photo {
+        position: absolute;
+        top: 60px;
+        right: 16%;
+        z-index: 2;
+        width: min(520px, 38vw);
+        overflow: hidden;
+    }
+    .enklav-journey-photo img { display: block; width: 100%; height: auto; }
+    .enklav-journey-video {
+        position: absolute;
+        top: calc(min(1200px, 84vw) * 0.71429);
+        left: 20%;
+        z-index: 2;
+        width: min(420px, 32vw);
+    }
+    .enklav-journey-video video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+    /* Below and slightly left of .enklav-journey-video, in the same empty pocket of the line
+       drawing (in viewBox-fraction terms) so it stays clear of the svg at this breakpoint too. */
+    .enklav-journey-video-2 {
+        position: absolute;
+        top: calc(min(1200px, 84vw) * 1.04281);
+        left: calc(50% - min(1200px, 84vw) * 0.489023);
+        z-index: 2;
+        width: calc(min(1200px, 84vw) * 0.417124);
+    }
+    .enklav-journey-video-2 video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+    /* Below and to the right of .enklav-journey-video-2, same viewBox-fraction approach so it
+       tracks the svg's real rendered size and stays clear of the line at every width. */
+    .enklav-journey-photo-2 {
+        position: absolute;
+        top: calc(min(1200px, 84vw) * 1.393964);
+        left: calc(50% + min(1200px, 84vw) * 0.048847);
+        z-index: 2;
+        width: calc(min(1200px, 84vw) * 0.417124);
+        overflow: hidden;
+    }
+    .enklav-journey-photo-2 img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+
+    @media (max-width: 900px) {
+        #enklav-journey { padding: 0 6% 60px; }
+        .enklav-journey-text { top: 24px; left: 4%; max-width: 46vw; }
+        .enklav-journey-heading { font-size: clamp(0.95rem, 4vw, 1.3rem); margin-bottom: 10px; }
+        .enklav-journey-desc { font-size: clamp(0.65rem, 2.4vw, 0.8rem); max-width: 190px; }
+        .enklav-journey-svg { width: min(600px, 98vw); }
+        /* right/width tied to the svg's real effective size (min(600px, 88vw), capped by the
+           flex-shrink the svg itself is subject to) so the photo stops drifting into the line's
+           top-right hook as the window widens toward 900px. */
+        .enklav-journey-photo {
+            top: 24px;
+            right: calc(50% - min(600px, 88vw) * 0.37815);
+            width: calc(min(600px, 88vw) * 0.28540);
+        }
+        /* Positioned as a fraction of the same value driving the svg's own width (min(600px, 98vw)),
+           so the video always lands in the same empty pocket of the line drawing instead of
+           drifting into it as the window shrinks. */
+        .enklav-journey-video {
+            top: calc(min(600px, 88vw) * 0.6806);
+            left: calc(50% - min(600px, 88vw) * 0.19265);
+            width: calc(min(600px, 88vw) * 0.38419);
+        }
+        .enklav-journey-video-2 {
+            top: calc(min(600px, 88vw) * 1.04281 + 9vw);
+            left: calc(50% - min(600px, 88vw) * 0.489023);
+            width: calc(min(600px, 88vw) * 0.417124);
+        }
+        .enklav-journey-photo-2 {
+            top: calc(min(600px, 88vw) * 1.393964 + 9vw);
+            left: calc(50% + min(600px, 88vw) * 0.048847);
+            width: calc(min(600px, 88vw) * 0.417124);
+        }
+    }
+
+    /* ── ROLE PARA BAIXO ── */
+    .role-baixo {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 30;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        opacity: 1;
+        transition: opacity 0.5s ease;
+        pointer-events: none;
+    }
+
+    .role-baixo p {
+        margin: 0;
+        color: #BBBBBB;
+        font-family: "Instrument Sans", sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .closing-section {
+        position: relative;
+        z-index: 1;
+        background: #1B1B1B;
+        padding: 140px 8%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 40px;
+        text-align: center;
+    }
+
+    .closing-credit {
+        margin: 0;
+        max-width: 640px;
+        color: rgba(255,255,255,0.7);
+        font-family: "Instrument Sans", sans-serif;
+        font-weight: 500;
+        font-size: clamp(1rem, 1.4vw, 1.2rem);
+        line-height: 1.6;
+    }
+
+    .closing-back {
+        color: #ffffff;
+        font-family: "Instrument Sans", sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        text-decoration: none;
+        border-bottom: 1px solid #ffffff;
+        padding-bottom: 2px;
+    }
+
+    @media (max-width: 900px) {
+        .page-titulo h1 { font-size: clamp(18px, 3vw, 37px); }
+    }
+    @media (max-width: 600px) {
+        .page-titulo h1 { font-size: 18px; }
+        .role-baixo p { font-size: 9px; }
+        .role-baixo svg { width: 14px; height: 6px; }
+        .role-baixo { gap: 5px; bottom: 16px; }
+    }
+    </style>
+<script src="cursor.js" defer></script>
+</head>
+<body>
+  <div class="page-transition-overlay" id="page-transition"></div>
+  <script>
+  (function() {
+    var overlay = document.getElementById('page-transition');
+    if (!overlay) return;
+    if (sessionStorage.getItem('pageTransition') === '1') {
+      sessionStorage.removeItem('pageTransition');
+      overlay.style.transition = 'none';
+      overlay.classList.add('cobrir');
+      overlay.offsetHeight;
+      overlay.style.transition = '';
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { overlay.classList.remove('cobrir'); });
+      });
+    }
+    window.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('a.page-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          var url = link.getAttribute('href');
+          sessionStorage.setItem('pageTransition', '1');
+          overlay.classList.add('cobrir');
+          setTimeout(function() { window.location.href = url; }, 900);
+        });
+      });
+    });
+  })();
+  </script>
+
+  <header class="page-header">
+    <a href="projects.html" class="page-link btn-back">
+      <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" fill="none">
+        <circle cx="22.5" cy="22.5" r="22.5" fill="white"/>
+        <path d="M23.2788 13H29L20.7212 23L29 33H23.2788L15 23L23.2788 13Z" fill="#1B1B1B"/>
+      </svg>
+    </a>
+    <div class="page-titulo">
+      <h1><a href="index.html" class="page-link">BRUNO EID</a></h1>
+      <p>Enklav</p>
+    </div>
+    <a href="devaneios-enklav.html" class="page-link btn-right">
+      <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <circle cx="22.5" cy="37.5" r="22.5" fill="white"/>
+        <circle cx="37.5" cy="22.5" r="22.5" fill="white"/>
+        <rect x="25" y="25" width="10" height="10" fill="#1B1B1B"/>
+      </svg>
+    </a>
+  </header>
+
+    <div id="enklav-fullscreen">
+        <img src="Enklav run mockup.png" alt="Enklav">
+    </div>
+
+    <div class="role-baixo" id="role-baixo">
+        <p>role para baixo</p>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="8" viewBox="0 0 20 8" fill="none">
+            <path d="M-1.43324e-07 3.72113L-3.49692e-07 -2.38419e-05L10 4.27885L20 -2.47161e-05L20 3.72113L10 8L-1.43324e-07 3.72113Z" fill="#BBBBBB"/>
+        </svg>
+    </div>
+
+    <section id="enklav-details">
+        <div style="height: 700vh;">
+            <div class="enklav-sticky">
+                <div id="enklav-nav-viewport">
+                    <ul id="enklav-nav-list">
+                        <li class="active">Trilha</li>
+                        <li>Comunidade</li>
+                        <li>Conquistas</li>
+                        <li>Conversa</li>
+                        <li>Mapa</li>
+                        <li>Eventos</li>
+                        <li>Descoberta</li>
+                    </ul>
+                </div>
+                <div id="enklav-phone-stack">
+                    <img class="enklav-phone-img active" src="celular Trilha.png" alt="Trilha">
+                    <img class="enklav-phone-img" src="Celular comunidade.png" alt="Comunidade">
+                    <img class="enklav-phone-img" src="Celular Conquistas.png" alt="Conquistas">
+                    <img class="enklav-phone-img" src="Celular conversa.png" alt="Conversa">
+                    <img class="enklav-phone-img" src="Celular mapa.png" alt="Mapa">
+                    <img class="enklav-phone-img" src="Celular evento.png" alt="Eventos">
+                    <img class="enklav-phone-img" src="Celular Descoberta.png" alt="Descoberta">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="enklav-video-section">
+        <div id="enklav-video-scroll">
+            <div id="enklav-video-sticky">
+                <div id="enklav-video-wrapper">
+                    <video id="enklav-run-video" src="Enklav run.mp4" muted loop playsinline preload="none"></video>
+                    <div class="enklav-video-overlay" id="enklav-video-overlay">
+                        <div class="enklav-video-play">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="37" height="37" viewBox="0 0 37 37" fill="none">
+  <ellipse cx="18.5" cy="18.5" rx="18.5" ry="18.5" transform="rotate(180 18.5 18.5)" fill="white"/>
+  <path d="M18.3125 28L13 28L20.6875 18.5L13 9L18.3125 9L26 18.5L18.3125 28Z" fill="#1B1B1B"/>
+</svg>
+                        </div>
+                        <div class="enklav-video-info">
+                            <span class="enklav-video-time">02:10</span>
+                            <span class="enklav-video-label">Ver Video</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="enklav-journey">
+        <div class="enklav-journey-text">
+            <h2 class="enklav-journey-heading">Uma jornada de descoberta.</h2>
+            <p class="enklav-journey-desc">Conhecendo a natureza, a história e a cultura portuguesa apartir de trilhas ao ar livre.</p>
+        </div>
+        <div class="enklav-journey-photo">
+            <img src="Enklav trilha app.png" alt="Enklav — trilha em uso">
+        </div>
+        <div class="enklav-journey-video">
+            <video id="enklav-time-video" src="Enklav time.mp4" muted loop playsinline preload="none"></video>
+        </div>
+        <div class="enklav-journey-video-2">
+            <video id="enklav-time-video-2" src="Enklav time 1.mp4" muted loop playsinline preload="none"></video>
+        </div>
+        <div class="enklav-journey-photo-2">
+            <img src="Imagem time 2.png" alt="Enklav — perfil e conquistas">
+        </div>
+        <svg class="enklav-journey-svg" xmlns="http://www.w3.org/2000/svg" width="919" height="1725" viewBox="0 0 919 1725" fill="none">
+  <defs>
+    <!-- The visible path below is a filled ribbon shape (no stroke), so it can't use
+         stroke-dasharray directly. This mask reveals it: a stroked copy of the line's
+         original centerline (same trajectory, zigzags and all) is drawn into the mask
+         with stroke-dasharray/dashoffset animated from JS, so the reveal grows
+         continuously along the real path instead of sweeping like a curtain. -->
+    <mask id="enklavJourneyMask" maskUnits="userSpaceOnUse" x="-50" y="-50" width="1020" height="1830">
+      <rect x="-50" y="-50" width="1020" height="1830" fill="black"/>
+      <path id="enklavJourneyMaskPath" d="M878.34 1.62695L853.435 30.6821C852.159 32.171 851.871 34.2684 852.699 36.0462L878.34 91.127L890.56 125.127L897.862 158.228C897.993 158.822 898.015 159.436 897.925 160.038L890.709 208.728C890.611 209.392 890.647 210.068 890.816 210.718L897.291 235.663C897.763 237.482 897.176 239.412 895.77 240.659L882.797 252.172C880.472 254.235 880.573 257.898 883.009 259.829L906.417 278.389C908.844 280.313 908.956 283.957 906.653 286.026L871.629 317.496C870.762 318.274 870.195 319.331 870.024 320.483L861.994 374.756C861.808 376.013 861.15 377.152 860.154 377.942L822.6 407.715C821.536 408.559 820.175 408.933 818.83 408.753L759.597 400.822C757.734 400.573 755.889 401.388 754.821 402.934L702.918 477.989M702.918 477.989L736.659 486.46C737.051 486.558 737.431 486.704 737.788 486.895L766.888 502.365C770.095 504.07 770.472 508.517 767.598 510.737L745.833 527.55M702.918 477.989L598.231 473.698C597.927 473.686 597.624 473.701 597.323 473.744L538.38 482.114C537.525 482.235 536.717 482.575 536.033 483.102L456.582 544.25C453.312 546.767 448.573 544.462 448.533 540.336L448.046 489.876C448.016 486.748 445.153 484.415 442.084 485.017L418.485 489.647C416.416 490.053 414.824 491.712 414.505 493.796L408.591 532.374C408.292 534.322 406.878 535.912 404.979 536.436L394.438 539.347C393.189 539.692 391.856 539.539 390.719 538.92L366.324 525.659C365.303 525.104 364.507 524.211 364.073 523.133L359.598 512.012C358.597 509.525 355.813 508.27 353.287 509.167L334.505 515.834C333.86 516.063 333.269 516.422 332.769 516.888L316.83 531.741C314.641 533.782 311.161 533.455 309.39 531.042L259.202 462.647C259.038 462.423 258.855 462.214 258.656 462.02L225.313 429.597C222.545 426.906 217.902 428.233 216.974 431.98L193.143 528.216C192.631 530.285 189.585 529.914 189.585 527.782C189.585 527.595 189.556 527.408 189.498 527.229L182.889 506.698C182.729 506.203 182.648 505.686 182.648 505.166V478.907C182.648 478.267 182.526 477.633 182.287 477.04L176.787 463.373C174.93 458.759 168.209 459.39 167.243 464.268L144.689 578.232C144.561 578.881 144.305 579.497 143.937 580.046L119.011 617.212C118.661 617.733 118.216 618.185 117.699 618.541L88.547 638.664C87.7119 639.241 86.7213 639.549 85.7066 639.549H57.7617C56.6511 639.549 55.5721 639.18 54.695 638.499L33.8481 622.31C31.133 620.201 27.1492 621.398 26.0459 624.654L14.6309 658.339C14.495 658.74 14.4106 659.157 14.3797 659.579L11.0098 705.639C10.9754 706.11 10.8745 706.573 10.7102 707.015L2.81795 728.262C1.67419 731.341 3.75951 734.668 7.02929 734.98L19.8221 736.203C21.8098 736.393 23.4939 737.748 24.1058 739.648L29.868 757.547C29.9787 757.891 30.1262 758.222 30.3081 758.534L97.3051 873.438C99.0566 876.441 97.2832 880.271 93.8596 880.879L90.6203 881.454C89.4302 881.665 88.3568 882.301 87.599 883.242L78.9463 893.993C76.4582 897.085 78.3902 901.703 82.3384 902.103L220.468 916.072C221.657 916.193 222.764 916.735 223.588 917.601L243.378 938.408C244.322 939.4 245.632 939.962 247.001 939.962H419.442C420.416 939.962 421.369 939.677 422.184 939.143L453.31 918.729C455.451 917.325 458.306 917.764 459.925 919.747L502.227 971.544C503.7 973.348 506.224 973.896 508.313 972.865L584.172 935.409C584.552 935.222 584.906 934.987 585.227 934.71L645.185 882.926C646.398 881.879 648.038 881.476 649.598 881.842L792.918 915.533L854.151 932.975C857.67 933.978 858.956 938.296 856.558 941.06L823.575 979.083C822.034 980.86 821.94 983.47 823.348 985.354L868.134 1045.25C869.421 1046.97 869.464 1049.32 868.241 1051.09L823.271 1116.07C821.913 1118.04 819.358 1118.76 817.169 1117.81L743.171 1085.7C740.173 1084.4 736.752 1086.27 736.242 1089.5L728.275 1139.88C728.004 1141.59 726.869 1143.03 725.273 1143.71L468.863 1251.46C468.642 1251.56 468.416 1251.63 468.184 1251.69L361.174 1279.52C360.927 1279.58 360.676 1279.63 360.422 1279.66L280.654 1287.78C278.102 1288.04 276.161 1290.19 276.161 1292.75V1294.2C276.161 1296.88 278.285 1299.09 280.97 1299.19L443.976 1305.42C444.936 1305.45 445.866 1305.77 446.653 1306.32L451.508 1309.72C455.075 1312.21 453.968 1317.76 449.716 1318.7L260.299 1360.4C258.295 1360.84 256.764 1362.46 256.438 1364.48L254.193 1378.43C253.968 1379.82 254.347 1381.25 255.235 1382.36L264.311 1393.63C265.572 1395.2 267.65 1395.86 269.584 1395.3L384.127 1362.46C386.721 1361.72 389.437 1363.17 390.264 1365.74L393.7 1376.41C394.475 1378.81 393.331 1381.42 391.036 1382.48L302.257 1423.45C297.606 1425.6 298.807 1432.52 303.91 1432.97L328.549 1435.16C328.952 1435.19 329.358 1435.18 329.758 1435.12L377.796 1427.66C378.818 1427.5 379.863 1427.66 380.789 1428.12L409.588 1442.43C410.349 1442.81 411.001 1443.38 411.482 1444.08L435.163 1478.49C437.122 1481.34 435.671 1485.27 432.332 1486.16L364.163 1504.34C361.637 1505.01 360.056 1507.52 360.537 1510.09L367.009 1544.7C367.109 1545.24 367.297 1545.75 367.564 1546.23L393.268 1591.98C394.286 1593.79 396.319 1594.79 398.374 1594.47L424.343 1590.55C425.182 1590.42 425.975 1590.09 426.647 1589.57L484.908 1544.7C487.631 1542.6 491.609 1543.82 492.7 1547.08L506.663 1588.77C507.055 1589.95 507 1591.22 506.508 1592.35L490.849 1628.42C490.566 1629.07 490.425 1629.78 490.436 1630.49L490.862 1659.11C490.886 1660.76 491.721 1662.29 493.094 1663.2L520.55 1681.44M520.55 1681.44L468.532 1721.63" stroke="white" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </mask>
+  </defs>
+  <path id="enklavJourneyFillPath" d="M854.684 33.5945L852.758 31.9999L851.79 33.1688L852.38 34.5669L854.684 33.5945ZM892.684 123.594L895.128 123.071L895.079 122.84L894.987 122.622L892.684 123.594ZM900.184 158.594L902.655 158.973L902.724 158.519L902.628 158.071L900.184 158.594ZM892.684 207.594L890.212 207.216L890.139 207.694L890.25 208.165L892.684 207.594ZM900.184 239.594L901.794 241.507L902.968 240.518L902.618 239.024L900.184 239.594ZM881.184 255.594L879.573 253.682L877.291 255.605L879.583 257.515L881.184 255.594ZM914.184 283.094L915.779 285.019L918.094 283.099L915.784 281.174L914.184 283.094ZM873.184 317.094L871.588 315.17L870.859 315.774L870.713 316.71L873.184 317.094ZM863.684 378.094L865.218 380.068L866.001 379.459L866.154 378.479L863.684 378.094ZM823.184 409.594L822.847 412.072L823.888 412.213L824.718 411.568L823.184 409.594ZM760.684 401.094L761.021 398.617L759.529 398.414L758.652 399.638L760.684 401.094ZM706.184 477.094L706.101 479.593L707.436 479.637L708.215 478.551L706.184 477.094ZM600.684 473.594L600.766 471.096L600.558 471.089L600.35 471.117L600.684 473.594ZM541.184 481.594L540.85 479.117L540.196 479.205L539.671 479.604L541.184 481.594ZM455.684 546.594L453.198 546.864L453.675 551.262L457.197 548.585L455.684 546.594ZM449.184 486.594L451.669 486.325L451.389 483.742L448.819 484.121L449.184 486.594ZM418.684 491.094L418.319 488.621L416.528 488.886L416.22 490.67L418.684 491.094ZM411.184 534.594L412.044 536.942L413.402 536.444L413.647 535.019L411.184 534.594ZM396.184 540.094L395.007 542.3L395.994 542.827L397.044 542.442L396.184 540.094ZM366.184 524.094L363.995 525.302L364.353 525.951L365.007 526.3L366.184 524.094ZM358.184 509.594L360.373 508.387L359.427 506.673L357.536 507.18L358.184 509.594ZM337.684 515.094L337.036 512.68L336.452 512.837L336.004 513.243L337.684 515.094ZM316.184 534.594L314.172 536.079L315.814 538.305L317.863 536.446L316.184 534.594ZM262.684 462.094L264.695 460.61L264.553 460.417L264.376 460.255L262.684 462.094ZM225.184 427.594L226.876 425.755L223.957 423.069L222.794 426.861L225.184 427.594ZM194.184 528.594L191.817 529.4L194.307 536.714L196.574 529.328L194.184 528.594ZM186.184 505.094H183.684V505.508L183.817 505.9L186.184 505.094ZM186.184 479.594H188.684V478.902L188.327 478.308L186.184 479.594ZM175.684 462.094L177.827 460.808L174.695 455.588L173.255 461.503L175.684 462.094ZM147.184 579.094L149.259 580.488L149.507 580.119L149.613 579.686L147.184 579.094ZM123.684 614.094L125.178 616.098L125.521 615.843L125.759 615.488L123.684 614.094ZM92.1836 637.594L92.4513 640.08L93.1307 640.007L93.6785 639.598L92.1836 637.594ZM59.6836 641.094L58.2475 643.141L59.0168 643.681L59.9513 643.58L59.6836 641.094ZM31.1836 621.094L32.6197 619.048L29.9994 617.209L28.8502 620.197L31.1836 621.094ZM16.1836 660.094L13.8502 659.197L13.7361 659.494L13.6998 659.81L16.1836 660.094ZM10.6836 708.094L13.0741 708.826L13.1412 708.607L13.1673 708.379L10.6836 708.094ZM3.18359 732.594L0.793094 731.863L-0.000487089 734.455L2.64758 735.036L3.18359 732.594ZM23.6836 737.094L25.8571 735.859L25.307 734.891L24.2196 734.653L23.6836 737.094ZM102.684 876.094L103.924 878.265L106.09 877.028L104.857 874.859L102.684 876.094ZM92.1836 882.094L90.9432 879.924L90.5921 880.125L90.3222 880.426L92.1836 882.094ZM79.1836 896.594L77.3222 894.926L74.1743 898.437L78.847 899.072L79.1836 896.594ZM222.684 916.094L224.364 914.243L223.789 913.722L223.02 913.617L222.684 916.094ZM249.684 940.594L248.004 942.446L248.718 943.094H249.684V940.594ZM422.184 940.594V943.094H422.912L423.526 942.704L422.184 940.594ZM460.684 916.094L462.619 914.512L461.214 912.794L459.341 913.985L460.684 916.094ZM507.684 973.594L505.748 975.177L506.987 976.693L508.756 975.853L507.684 973.594ZM587.684 935.594L588.756 937.853L589.083 937.698L589.352 937.456L587.684 935.594ZM650.184 879.594L650.815 877.176L649.516 876.836L648.515 877.733L650.184 879.594ZM864.684 935.594L866.552 937.255L869.263 934.206L865.315 933.176L864.684 935.594ZM824.684 980.594L822.815 978.934L821.485 980.43L822.654 982.055L824.684 980.594ZM872.184 1046.59L874.266 1047.98L875.223 1046.54L874.213 1045.13L872.184 1046.59ZM824.684 1118.09L823.765 1120.42L825.647 1121.16L826.766 1119.48L824.684 1118.09ZM743.684 1086.09L744.602 1083.77L741.95 1082.72L741.258 1085.49L743.684 1086.09ZM729.684 1142.09L730.656 1144.4L731.806 1143.91L732.109 1142.7L729.684 1142.09ZM470.184 1251.59L470.803 1254.02L470.984 1253.97L471.156 1253.9L470.184 1251.59ZM360.684 1279.59L360.887 1282.09L361.098 1282.07L361.303 1282.02L360.684 1279.59ZM281.184 1286.09L280.98 1283.6L280.793 1288.56L281.184 1286.09ZM458.184 1314.09L458.753 1316.53L458.574 1311.63L458.184 1314.09ZM261.684 1360.09L261.114 1357.66L259.548 1358.03L259.232 1359.6L261.684 1360.09ZM258.184 1377.59L255.732 1377.1L255.514 1378.19L256.177 1379.09L258.184 1377.59ZM271.184 1395.09L269.177 1396.59L270.214 1397.98L271.884 1397.49L271.184 1395.09ZM391.184 1360.09L393.457 1359.06L392.559 1357.09L390.484 1357.69L391.184 1360.09ZM399.184 1377.59L400.297 1379.83L402.463 1378.76L401.457 1376.56L399.184 1377.59ZM301.684 1426.09L300.57 1423.86L294.758 1426.75L301.008 1428.5L301.684 1426.09ZM330.184 1434.09L329.508 1436.5L330.038 1436.65L330.582 1436.56L330.184 1434.09ZM379.684 1426.09L380.721 1423.82L380.032 1423.51L379.285 1423.63L379.684 1426.09ZM413.684 1441.59L415.809 1440.28L415.41 1439.63L414.721 1439.32L413.684 1441.59ZM442.184 1487.59L442.779 1490.02L446.121 1489.2L444.309 1486.28L442.184 1487.59ZM360.684 1507.59L360.088 1505.17L357.751 1505.74L358.235 1508.1L360.684 1507.59ZM368.684 1546.59L366.235 1547.1L366.317 1547.5L366.525 1547.86L368.684 1546.59ZM394.684 1591.09L392.525 1592.36L393.249 1593.59H394.684V1591.09ZM426.684 1591.09V1593.59H427.54L428.216 1593.07L426.684 1591.09ZM489.184 1542.59L491.495 1541.64L490.244 1538.61L487.651 1540.62L489.184 1542.59ZM509.184 1591.09L511.527 1591.97L511.868 1591.05L511.495 1590.14L509.184 1591.09ZM494.684 1630.09L492.34 1629.22L492.184 1629.64V1630.09H494.684ZM494.684 1663.09H492.184V1664.44L493.305 1665.18L494.684 1663.09ZM524.184 1682.59L525.712 1684.57L528.478 1682.44L525.562 1680.51L524.184 1682.59ZM472.156 1719.62C471.063 1720.46 470.861 1722.03 471.705 1723.12C472.549 1724.22 474.119 1724.42 475.212 1723.57L473.684 1721.59L472.156 1719.62ZM881.184 1.59448L879.258 -5.24521e-05L852.758 31.9999L854.684 33.5945L856.609 35.189L883.109 3.18902L881.184 1.59448ZM854.684 33.5945L852.38 34.5669L890.38 124.567L892.684 123.594L894.987 122.622L856.987 32.6221L854.684 33.5945ZM892.684 123.594L890.239 124.118L897.739 159.118L900.184 158.594L902.628 158.071L895.128 123.071L892.684 123.594ZM900.184 158.594L897.712 158.216L890.212 207.216L892.684 207.594L895.155 207.973L902.655 158.973L900.184 158.594ZM892.684 207.594L890.25 208.165L897.75 240.165L900.184 239.594L902.618 239.024L895.118 207.024L892.684 207.594ZM900.184 239.594L898.573 237.682L879.573 253.682L881.184 255.594L882.794 257.507L901.794 241.507L900.184 239.594ZM881.184 255.594L879.583 257.515L912.583 285.015L914.184 283.094L915.784 281.174L882.784 253.674L881.184 255.594ZM914.184 283.094L912.588 281.17L871.588 315.17L873.184 317.094L874.779 319.019L915.779 285.019L914.184 283.094ZM873.184 317.094L870.713 316.71L861.213 377.71L863.684 378.094L866.154 378.479L875.654 317.479L873.184 317.094ZM863.684 378.094L862.149 376.121L821.649 407.621L823.184 409.594L824.718 411.568L865.218 380.068L863.684 378.094ZM823.184 409.594L823.521 407.117L761.021 398.617L760.684 401.094L760.347 403.572L822.847 412.072L823.184 409.594ZM760.684 401.094L758.652 399.638L704.152 475.638L706.184 477.094L708.215 478.551L762.715 402.551L760.684 401.094ZM706.184 477.094L706.266 474.596L600.766 471.096L600.684 473.594L600.601 476.093L706.101 479.593L706.184 477.094ZM600.684 473.594L600.35 471.117L540.85 479.117L541.184 481.594L541.517 484.072L601.017 476.072L600.684 473.594ZM541.184 481.594L539.671 479.604L454.171 544.604L455.684 546.594L457.197 548.585L542.697 483.585L541.184 481.594ZM455.684 546.594L458.169 546.325L451.669 486.325L449.184 486.594L446.698 486.864L453.198 546.864L455.684 546.594ZM449.184 486.594L448.819 484.121L418.319 488.621L418.684 491.094L419.048 493.568L449.548 489.068L449.184 486.594ZM418.684 491.094L416.22 490.67L408.72 534.17L411.184 534.594L413.647 535.019L421.147 491.519L418.684 491.094ZM411.184 534.594L410.323 532.247L395.323 537.747L396.184 540.094L397.044 542.442L412.044 536.942L411.184 534.594ZM396.184 540.094L397.36 537.889L367.36 521.889L366.184 524.094L365.007 526.3L395.007 542.3L396.184 540.094ZM366.184 524.094L368.373 522.887L360.373 508.387L358.184 509.594L355.995 510.802L363.995 525.302L366.184 524.094ZM358.184 509.594L357.536 507.18L337.036 512.68L337.684 515.094L338.331 517.509L358.831 512.009L358.184 509.594ZM337.684 515.094L336.004 513.243L314.504 532.743L316.184 534.594L317.863 536.446L339.363 516.946L337.684 515.094ZM316.184 534.594L318.195 533.11L264.695 460.61L262.684 462.094L260.672 463.579L314.172 536.079L316.184 534.594ZM262.684 462.094L264.376 460.255L226.876 425.755L225.184 427.594L223.491 429.434L260.991 463.934L262.684 462.094ZM225.184 427.594L222.794 426.861L191.794 527.861L194.184 528.594L196.574 529.328L227.574 428.328L225.184 427.594ZM194.184 528.594L196.55 527.789L188.55 504.289L186.184 505.094L183.817 505.9L191.817 529.4L194.184 528.594ZM186.184 505.094H188.684V479.594H186.184H183.684V505.094H186.184ZM186.184 479.594L188.327 478.308L177.827 460.808L175.684 462.094L173.54 463.381L184.04 480.881L186.184 479.594ZM175.684 462.094L173.255 461.503L144.755 578.503L147.184 579.094L149.613 579.686L178.113 462.686L175.684 462.094ZM147.184 579.094L145.108 577.701L121.608 612.701L123.684 614.094L125.759 615.488L149.259 580.488L147.184 579.094ZM123.684 614.094L122.189 612.091L90.6887 635.591L92.1836 637.594L93.6785 639.598L125.178 616.098L123.684 614.094ZM92.1836 637.594L91.9159 635.109L59.4159 638.609L59.6836 641.094L59.9513 643.58L92.4513 640.08L92.1836 637.594ZM59.6836 641.094L61.1197 639.048L32.6197 619.048L31.1836 621.094L29.7475 623.141L58.2475 643.141L59.6836 641.094ZM31.1836 621.094L28.8502 620.197L13.8502 659.197L16.1836 660.094L18.517 660.992L33.517 621.992L31.1836 621.094ZM16.1836 660.094L13.6998 659.81L8.19985 707.81L10.6836 708.094L13.1673 708.379L18.6673 660.379L16.1836 660.094ZM10.6836 708.094L8.29309 707.363L0.793094 731.863L3.18359 732.594L5.57409 733.326L13.0741 708.826L10.6836 708.094ZM3.18359 732.594L2.64758 735.036L23.1476 739.536L23.6836 737.094L24.2196 734.653L3.71961 730.153L3.18359 732.594ZM23.6836 737.094L21.5101 738.33L100.51 877.33L102.684 876.094L104.857 874.859L25.8571 735.859L23.6836 737.094ZM102.684 876.094L101.443 873.924L90.9432 879.924L92.1836 882.094L93.4239 884.265L103.924 878.265L102.684 876.094ZM92.1836 882.094L90.3222 880.426L77.3222 894.926L79.1836 896.594L81.045 898.263L94.045 883.763L92.1836 882.094ZM79.1836 896.594L78.847 899.072L222.347 918.572L222.684 916.094L223.02 913.617L79.5202 894.117L79.1836 896.594ZM222.684 916.094L221.004 917.946L248.004 942.446L249.684 940.594L251.364 938.743L224.364 914.243L222.684 916.094ZM249.684 940.594V943.094H422.184V940.594V938.094H249.684V940.594ZM422.184 940.594L423.526 942.704L462.026 918.204L460.684 916.094L459.341 913.985L420.841 938.485L422.184 940.594ZM460.684 916.094L458.748 917.677L505.748 975.177L507.684 973.594L509.619 972.012L462.619 914.512L460.684 916.094ZM507.684 973.594L508.756 975.853L588.756 937.853L587.684 935.594L586.611 933.336L506.611 971.336L507.684 973.594ZM587.684 935.594L589.352 937.456L651.852 881.456L650.184 879.594L648.515 877.733L586.015 933.733L587.684 935.594ZM650.184 879.594L649.552 882.013L864.052 938.013L864.684 935.594L865.315 933.176L650.815 877.176L650.184 879.594ZM864.684 935.594L862.815 933.934L822.815 978.934L824.684 980.594L826.552 982.255L866.552 937.255L864.684 935.594ZM824.684 980.594L822.654 982.055L870.154 1048.05L872.184 1046.59L874.213 1045.13L826.713 979.134L824.684 980.594ZM872.184 1046.59L870.101 1045.21L822.601 1116.71L824.684 1118.09L826.766 1119.48L874.266 1047.98L872.184 1046.59ZM824.684 1118.09L825.602 1115.77L744.602 1083.77L743.684 1086.09L742.765 1088.42L823.765 1120.42L824.684 1118.09ZM743.684 1086.09L741.258 1085.49L727.258 1141.49L729.684 1142.09L732.109 1142.7L746.109 1086.7L743.684 1086.09ZM729.684 1142.09L728.712 1139.79L469.212 1249.29L470.184 1251.59L471.156 1253.9L730.656 1144.4L729.684 1142.09ZM470.184 1251.59L469.564 1249.17L360.064 1277.17L360.684 1279.59L361.303 1282.02L470.803 1254.02L470.184 1251.59ZM360.684 1279.59L360.48 1277.1L280.98 1283.6L281.184 1286.09L281.387 1288.59L360.887 1282.09L360.684 1279.59ZM281.184 1286.09L280.793 1288.56L457.793 1316.56L458.184 1314.09L458.574 1311.63L281.574 1283.63L281.184 1286.09ZM458.184 1314.09L457.614 1311.66L261.114 1357.66L261.684 1360.09L262.253 1362.53L458.753 1316.53L458.184 1314.09ZM261.684 1360.09L259.232 1359.6L255.732 1377.1L258.184 1377.59L260.635 1378.08L264.135 1360.58L261.684 1360.09ZM258.184 1377.59L256.177 1379.09L269.177 1396.59L271.184 1395.09L273.19 1393.6L260.19 1376.1L258.184 1377.59ZM271.184 1395.09L271.884 1397.49L391.884 1362.49L391.184 1360.09L390.484 1357.69L270.484 1392.69L271.184 1395.09ZM391.184 1360.09L388.91 1361.13L396.91 1378.63L399.184 1377.59L401.457 1376.56L393.457 1359.06L391.184 1360.09ZM399.184 1377.59L398.07 1375.36L300.57 1423.86L301.684 1426.09L302.797 1428.33L400.297 1379.83L399.184 1377.59ZM301.684 1426.09L301.008 1428.5L329.508 1436.5L330.184 1434.09L330.859 1431.69L302.359 1423.69L301.684 1426.09ZM330.184 1434.09L330.582 1436.56L380.082 1428.56L379.684 1426.09L379.285 1423.63L329.785 1431.63L330.184 1434.09ZM379.684 1426.09L378.647 1428.37L412.647 1443.87L413.684 1441.59L414.721 1439.32L380.721 1423.82L379.684 1426.09ZM413.684 1441.59L411.558 1442.91L440.058 1488.91L442.184 1487.59L444.309 1486.28L415.809 1440.28L413.684 1441.59ZM442.184 1487.59L441.588 1485.17L360.088 1505.17L360.684 1507.59L361.279 1510.02L442.779 1490.02L442.184 1487.59ZM360.684 1507.59L358.235 1508.1L366.235 1547.1L368.684 1546.59L371.133 1546.09L363.133 1507.09L360.684 1507.59ZM368.684 1546.59L366.525 1547.86L392.525 1592.36L394.684 1591.09L396.842 1589.83L370.842 1545.33L368.684 1546.59ZM394.684 1591.09V1593.59H426.684V1591.09V1588.59H394.684V1591.09ZM426.684 1591.09L428.216 1593.07L490.716 1544.57L489.184 1542.59L487.651 1540.62L425.151 1589.12L426.684 1591.09ZM489.184 1542.59L486.872 1543.55L506.872 1592.05L509.184 1591.09L511.495 1590.14L491.495 1541.64L489.184 1542.59ZM509.184 1591.09L506.84 1590.22L492.34 1629.22L494.684 1630.09L497.027 1630.97L511.527 1591.97L509.184 1591.09ZM494.684 1630.09H492.184V1663.09H494.684H497.184V1630.09H494.684ZM494.684 1663.09L493.305 1665.18L522.805 1684.68L524.184 1682.59L525.562 1680.51L496.062 1661.01L494.684 1663.09ZM524.184 1682.59L522.656 1680.62L472.156 1719.62L473.684 1721.59L475.212 1723.57L525.712 1684.57L524.184 1682.59Z" fill="white"/>
+  <g id="enklavJourneyMarker" style="opacity: 0;">
+    <g transform="translate(-18,-18)">
+      <path d="M4.13277 14.0133C3.93459 13.8049 3.60498 13.7966 3.39658 13.9948L0.377786 16.8655C0.169382 17.0637 0.161097 17.3933 0.359281 17.6017L12.2011 30.0542C14.9757 32.9719 19.5902 33.0879 22.5078 30.3133L34.9603 18.4715C35.1687 18.2733 35.177 17.9437 34.9788 17.7353L32.1081 14.7165C31.9099 14.5081 31.5803 14.4998 31.3719 14.698L20.0514 25.4633C18.5926 26.8506 16.2854 26.7926 14.8981 25.3337L4.13277 14.0133Z" fill="#FF4D00"/>
+    </g>
+  </g>
+</svg>
+    </section>
+
+    <section id="enklav-final">
+        <img src="Enklav final.png" alt="Enklav">
+        <div class="enklav-final-text">
+            <p class="enklav-final-line">Conhecendo</p>
+            <p class="enklav-final-line">Portugal</p>
+        </div>
+    </section>
+
+    <section class="closing-section">
+        <p class="closing-credit">Aplicativo criado na cadeira de Projecto de Design em Empresas na UA.</p>
+        <a href="projects.html" class="page-link closing-back">Voltar a projectos.</a>
+    </section>
+
+    <script>
+        var pageHeader = document.querySelector('.page-header');
+        var roleBaixo = document.getElementById('role-baixo');
+        var detailsSection = document.getElementById('enklav-details');
+        var navViewport = document.getElementById('enklav-nav-viewport');
+        var navList = document.getElementById('enklav-nav-list');
+        var navItems = Array.prototype.slice.call(document.querySelectorAll('#enklav-nav-list li'));
+        var phoneImgs = document.querySelectorAll('.enklav-phone-img');
+
+        var GRAY = [213, 213, 213]; // #D5D5D5
+        var DARK = [27, 27, 27];    // #1B1B1B
+
+        function lerpColor(t) {
+            t = Math.max(0, Math.min(1, t));
+            var r = Math.round(GRAY[0] + (DARK[0] - GRAY[0]) * t);
+            var g = Math.round(GRAY[1] + (DARK[1] - GRAY[1]) * t);
+            var b = Math.round(GRAY[2] + (DARK[2] - GRAY[2]) * t);
+            return 'rgb(' + r + ',' + g + ',' + b + ')';
+        }
+
+        function updateEnklavScroll() {
+            var heroFade = window.innerHeight * 0.75;
+            if (pageHeader) {
+                pageHeader.classList.toggle('header-scrolled', window.scrollY > heroFade);
+            }
+            if (roleBaixo) {
+                roleBaixo.style.opacity = window.scrollY > 40 ? '0' : '1';
+            }
+
+            var rect = detailsSection.getBoundingClientRect();
+            var scrollable = detailsSection.offsetHeight - window.innerHeight;
+            var p = Math.max(0, Math.min(-rect.top / scrollable, 1));
+
+            // Índice contínuo (fracionário) em vez de saltar de palavra em
+            // palavra — a lista desliza suavemente em sincronia com o scroll,
+            // e a cor de cada item também interpola de forma contínua.
+            var continuousIndex = p * (navItems.length - 1);
+            var step = navItems.length > 1 ? (navItems[1].offsetTop - navItems[0].offsetTop) : 0;
+            var centerOffset = (navViewport.clientHeight - navItems[0].offsetHeight) / 2;
+
+            navList.style.transform = 'translateY(' + (centerOffset - continuousIndex * step) + 'px)';
+
+            navItems.forEach(function (el, i) {
+                var diff = Math.min(1, Math.abs(i - continuousIndex));
+                el.style.color = lerpColor(1 - diff);
+            });
+
+            var idx = Math.round(continuousIndex);
+            phoneImgs.forEach(function (el, i) { el.classList.toggle('active', i === idx); });
+        }
+
+        // ── VÍDEO — cresce de "menor e à direita" até ocupar a tela inteira ──────
+        var videoScroll = document.getElementById('enklav-video-scroll');
+        var videoWrapper = document.getElementById('enklav-video-wrapper');
+        var START_WIDTH = 55;   // % da tela, no início
+        var START_HEIGHT = 60;  // vh, no início
+
+        function updateEnklavVideo() {
+            var rect = videoScroll.getBoundingClientRect();
+            var scrollable = videoScroll.offsetHeight - window.innerHeight;
+            var p = Math.max(0, Math.min(-rect.top / scrollable, 1));
+
+            var width = START_WIDTH + (100 - START_WIDTH) * p;
+            var height = START_HEIGHT + (100 - START_HEIGHT) * p;
+            videoWrapper.style.width = width + '%';
+            videoWrapper.style.height = height + 'vh';
+        }
+
+        window.addEventListener('scroll', function () {
+            updateEnklavScroll();
+            updateEnklavVideo();
+        }, { passive: true });
+        window.addEventListener('resize', function () {
+            updateEnklavScroll();
+            updateEnklavVideo();
+        });
+        updateEnklavScroll();
+        updateEnklavVideo();
+
+        // Só começa a carregar/reproduzir o vídeo (307MB) quando ele entra em
+        // tela, em vez de baixá-lo inteiro assim que a página abre.
+        var enklavRunVideo = document.getElementById('enklav-run-video');
+        if (enklavRunVideo && 'IntersectionObserver' in window) {
+            var enklavVideoObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        enklavRunVideo.play().catch(function () {});
+                    } else {
+                        enklavRunVideo.pause();
+                    }
+                });
+            }, { threshold: 0.1 });
+            enklavVideoObserver.observe(enklavRunVideo);
+        }
+
+        // Clicar no play liga o som e mostra a timeline nativa (play/pause,
+        // avançar/recuar, volume) em vez do overlay customizado.
+        var enklavVideoOverlay = document.getElementById('enklav-video-overlay');
+        if (enklavVideoOverlay && enklavRunVideo) {
+            enklavVideoOverlay.addEventListener('click', function () {
+                enklavRunVideo.muted = false;
+                enklavRunVideo.controls = true;
+                enklavRunVideo.play().catch(function () {});
+                enklavVideoOverlay.classList.add('is-hidden');
+            });
+        }
+
+        // Mesmo lazy-play do vídeo pequeno da secção "jornada".
+        var enklavTimeVideo = document.getElementById('enklav-time-video');
+        if (enklavTimeVideo && 'IntersectionObserver' in window) {
+            var enklavTimeObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        enklavTimeVideo.play().catch(function () {});
+                    } else {
+                        enklavTimeVideo.pause();
+                    }
+                });
+            }, { threshold: 0.1 });
+            enklavTimeObserver.observe(enklavTimeVideo);
+        }
+
+        var enklavTimeVideo2 = document.getElementById('enklav-time-video-2');
+        if (enklavTimeVideo2 && 'IntersectionObserver' in window) {
+            var enklavTimeObserver2 = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        enklavTimeVideo2.play().catch(function () {});
+                    } else {
+                        enklavTimeVideo2.pause();
+                    }
+                });
+            }, { threshold: 0.1 });
+            enklavTimeObserver2.observe(enklavTimeVideo2);
+        }
+
+        // Desenha a linha do svg da secção "jornada" progressivamente conforme o scroll
+        // (estilo rideradian.com): a linha visível é um fill (sem stroke), então quem
+        // "desenha" de verdade é o path invisível da máscara (mesmo trajeto, com
+        // stroke-dasharray/dashoffset), revelando o overlay branco 100% opaco continuamente
+        // ao longo da linha (a base fica sempre em baixa opacidade via CSS).
+        var enklavJourneySvgEl = document.querySelector('.enklav-journey-svg');
+        var enklavJourneyMaskPath = document.getElementById('enklavJourneyMaskPath');
+        var enklavJourneyFillPath = document.getElementById('enklavJourneyFillPath');
+        if (enklavJourneySvgEl && enklavJourneyMaskPath && enklavJourneyFillPath) {
+            // A bright (100% opacity) clone of the fill path, revealed by the mask — cloned via
+            // JS instead of an SVG <use>, since <use> silently failed to paint here (referencing
+            // this particular compound path through a mask rendered nothing, even forced fully
+            // open; a real cloned <path> node with the same 'd' avoids that entirely and is
+            // confirmed to work). The original stays dim underneath as the "not yet passed" guide.
+            var enklavJourneyBrightPath = enklavJourneyFillPath.cloneNode(true);
+            enklavJourneyBrightPath.removeAttribute('id');
+            enklavJourneyBrightPath.setAttribute('mask', 'url(#enklavJourneyMask)');
+            enklavJourneyBrightPath.style.opacity = '1';
+            enklavJourneySvgEl.appendChild(enklavJourneyBrightPath);
+
+            // O marcador some acima de tudo (inclusive do brightPath) — reappendChild move
+            // o nó existente para o fim da lista de filhos, garantindo que fique por cima.
+            var enklavJourneyMarker = document.getElementById('enklavJourneyMarker');
+            if (enklavJourneyMarker) {
+                enklavJourneySvgEl.appendChild(enklavJourneyMarker);
+            }
+
+            // O path original tem vários comandos "M" (move-to): cada um inicia um sub-trajeto
+            // desconectado (ex.: o ramal curto no garfo da trilha). Um único <path> com stroke-
+            // dasharray reseta a fase a cada "M", revelando todos os sub-trajetos em paralelo em
+            // vez de em sequência — por isso cada sub-trajeto vira seu próprio <path> dentro da
+            // máscara, com dasharray/dashoffset controlados individualmente e revelados em ordem.
+            // Isso evita ter que ligar os sub-trajetos com uma linha reta artificial (o que faria
+            // o marcador passar por cima de um trecho que não existe na arte visível).
+            var enklavMaskD = enklavJourneyMaskPath.getAttribute('d');
+            var enklavSubpathsD = enklavMaskD.split(/(?=M)/).filter(function (s) { return s.length > 0; });
+            var enklavMaskParent = enklavJourneyMaskPath.parentNode;
+            var enklavSubpaths = enklavSubpathsD.map(function (subD) {
+                var el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                el.setAttribute('d', subD);
+                el.setAttribute('stroke', 'white');
+                el.setAttribute('stroke-width', '34');
+                el.setAttribute('stroke-linecap', 'round');
+                el.setAttribute('stroke-linejoin', 'round');
+                el.setAttribute('fill', 'none');
+                enklavMaskParent.insertBefore(el, enklavJourneyMaskPath);
+                // Set via the SVG attributes (not .style) so the values stay in the path's own
+                // user-space units — assigning through .style has the browser append "px", which
+                // gets resolved in CSS pixel space and drifts out of sync with getTotalLength()
+                // once the svg is scaled up by its CSS width (viewBox 919 vs displayed ~1200px).
+                var length = el.getTotalLength();
+                el.setAttribute('stroke-dasharray', length);
+                el.setAttribute('stroke-dashoffset', length); // nada revelado até aparecer
+                return { el: el, length: length };
+            });
+            enklavMaskParent.removeChild(enklavJourneyMaskPath);
+
+            // O 2º sub-trajeto é o ramalzinho sem saída no garfo da trilha (sai do trajeto
+            // principal, desenha um beco sem saída e não leva a lugar nenhum). Se ele entrar
+            // na sequência normal, a trilha principal fica "parada" enquanto esse desvio é
+            // desenhado, e o marcador vai junto — daí a sensação de "a linha vai a um caminho
+            // sem saída e volta". Por isso ele é tratado à parte: aparece assim que a trilha
+            // principal passa pelo garfo, sem consumir distância de scroll nem desviar a seta.
+            var enklavSpurSubpath = enklavSubpaths[1];
+            var enklavMainSubpaths = enklavSubpaths.filter(function (sp, i) { return i !== 1; });
+
+            var enklavTotalLength = 0;
+            enklavMainSubpaths.forEach(function (sp) {
+                sp.before = enklavTotalLength;
+                enklavTotalLength += sp.length;
+            });
+            var enklavForkLength = enklavMainSubpaths[0] ? enklavMainSubpaths[0].length : 0;
+
+            var enklavJourneyStarted = false;
+            var enklavJourneyTicking = false;
+            var enklavUpdateJourneyDraw = function () {
+                var rect = enklavJourneySvgEl.getBoundingClientRect();
+                var vh = window.innerHeight;
+                // Referência é o meio da janela: o desenho só começa quando o topo da
+                // linha cruza essa marca e termina quando a base da linha a atinge,
+                // em vez de começar assim que a linha toca a borda inferior da tela.
+                var progress = rect.height > 0 ? ((vh / 2) - rect.top) / rect.height : 0;
+                progress = Math.max(0, Math.min(1, progress));
+                var enklavRevealedLength = enklavTotalLength * progress;
+
+                if (enklavSpurSubpath) {
+                    enklavSpurSubpath.el.setAttribute('stroke-dashoffset', enklavRevealedLength >= enklavForkLength ? 0 : enklavSpurSubpath.length);
+                }
+
+                // O marcador fica um pouco "atrás" do comprimento revelado de verdade — só no
+                // fim isso importa (o resto do tempo a diferença é pequena demais pra notar) —
+                // pra não terminar exatamente em cima da ponta final da linha.
+                var enklavMarkerBackoff = 18;
+                var enklavMarkerRevealedLength = Math.min(enklavRevealedLength, Math.max(0, enklavTotalLength - enklavMarkerBackoff));
+
+                var enklavMarkerSubpath = null;
+                var enklavMarkerLocalLen = 0;
+                enklavMainSubpaths.forEach(function (sp) {
+                    var localRevealed = Math.max(0, Math.min(sp.length, enklavRevealedLength - sp.before));
+                    sp.el.setAttribute('stroke-dashoffset', sp.length - localRevealed);
+                    if (enklavMarkerRevealedLength >= sp.before && enklavMarkerRevealedLength <= sp.before + sp.length) {
+                        enklavMarkerSubpath = sp;
+                        enklavMarkerLocalLen = Math.max(0, Math.min(sp.length, enklavMarkerRevealedLength - sp.before));
+                    }
+                });
+                if (!enklavMarkerSubpath) {
+                    enklavMarkerSubpath = enklavMainSubpaths[enklavMainSubpaths.length - 1];
+                    enklavMarkerLocalLen = Math.max(0, enklavMarkerSubpath.length - enklavMarkerBackoff);
+                }
+
+                if (enklavJourneyMarker) {
+                    // Só aparece depois que o caminho realmente começa a ser desenhado — antes
+                    // disso fica invisível, em vez de já visível parado no ponto inicial.
+                    enklavJourneyMarker.style.opacity = enklavRevealedLength > 0 ? '1' : '0';
+                }
+
+                if (enklavJourneyMarker && enklavMarkerSubpath) {
+                    // Avança um pouco a posição usada para o marcador (mas não a usada para
+                    // revelar a linha) para ele ficar bem em cima da ponta visível, em vez de
+                    // um pouco atrás dela.
+                    var enklavMarkerForwardOffset = 7;
+                    var enklavMarkerPosLen = Math.min(enklavMarkerSubpath.length, enklavMarkerLocalLen + enklavMarkerForwardOffset);
+                    var enklavMarkerPoint = enklavMarkerSubpath.el.getPointAtLength(enklavMarkerPosLen);
+                    // Ângulo tirado de dois pontos próximos ao longo do mesmo sub-trajeto
+                    // (tangente), em vez de um único ponto, para acompanhar a direção real
+                    // do traço naquele trecho.
+                    var enklavAngleDelta = 2;
+                    var enklavAnglePrev = enklavMarkerSubpath.el.getPointAtLength(Math.max(0, enklavMarkerPosLen - enklavAngleDelta));
+                    var enklavAngleNext = enklavMarkerSubpath.el.getPointAtLength(Math.min(enklavMarkerSubpath.length, enklavMarkerPosLen + enklavAngleDelta));
+                    var enklavMarkerAngle = Math.atan2(enklavAngleNext.y - enklavAnglePrev.y, enklavAngleNext.x - enklavAnglePrev.x) * (180 / Math.PI) - 100;
+                    enklavJourneyMarker.setAttribute('transform', 'translate(' + enklavMarkerPoint.x + ',' + enklavMarkerPoint.y + ') rotate(' + enklavMarkerAngle + ')');
+                }
+
+                enklavJourneyTicking = false;
+            };
+            // Roda uma vez já de cara para posicionar o marcador corretamente no início do
+            // trajeto (progress 0) em vez de deixá-lo parado sem transform na origem do svg
+            // (0,0) — um ponto fora da linha — até o primeiro scroll/interseção acontecer.
+            enklavUpdateJourneyDraw();
+
+            var enklavOnJourneyScroll = function () {
+                if (!enklavJourneyStarted) return;
+                if (!enklavJourneyTicking) {
+                    enklavJourneyTicking = true;
+                    requestAnimationFrame(enklavUpdateJourneyDraw);
+                }
+            };
+            window.addEventListener('scroll', enklavOnJourneyScroll, { passive: true });
+            window.addEventListener('resize', enklavOnJourneyScroll);
+
+            // Só começa a acompanhar o scroll quando o svg realmente aparece na tela.
+            var enklavJourneyObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting && !enklavJourneyStarted) {
+                        enklavJourneyStarted = true;
+                        enklavUpdateJourneyDraw();
+                    }
+                });
+            }, { threshold: 0 });
+            enklavJourneyObserver.observe(enklavJourneySvgEl);
+        }
+    </script>
+</body>
+</html>

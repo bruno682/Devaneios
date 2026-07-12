@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keep Moving</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+
+        canvas { display: block; }
+
+        #hint {
+            position: fixed;
+            bottom: 36px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .hint-icon {
+            display: block;
+            animation: hint-orbit 2.8s linear infinite;
+        }
+        @keyframes hint-orbit {
+            from { transform: rotate(0deg)   translateY(-18px) rotate(0deg); }
+            to   { transform: rotate(360deg) translateY(-18px) rotate(-360deg); }
+        }
+
+        .page-header {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+            display: flex; align-items: flex-start; justify-content: space-between;
+            padding: 20px; pointer-events: none;
+        }
+        .page-header a { pointer-events: auto; }
+        .page-titulo { text-align: center; }
+        .page-titulo h1 { margin: 0; color: #ffffff; font-family: "Instrument Sans", sans-serif; font-size: 37px; font-weight: 700; line-height: normal; transition: color 0.4s ease; }
+        .page-titulo h1 a { color: inherit; text-decoration: none; }
+        .page-titulo p { margin: 0; color: rgba(255,255,255,0.5); font-family: "Instrument Sans", sans-serif; font-size: 14px; font-weight: 600; line-height: normal; text-transform: uppercase; transition: color 0.4s ease; }
+
+        /* botões brancos para fundo escuro → invertem no estado final */
+        .btn-back-svg circle, .btn-right-svg circle { fill: #ffffff; transition: fill 0.4s ease; }
+        .btn-back-svg path { fill: #1B1B1B; transition: fill 0.4s ease; }
+        .btn-right-svg rect { fill: #1B1B1B; transition: fill 0.4s ease; }
+
+        body.estado-final .page-titulo h1 { color: #1B1B1B; }
+        body.estado-final .page-titulo p { color: #555; }
+        body.estado-final .btn-back-svg circle { fill: #1B1B1B; }
+        body.estado-final .btn-back-svg path { fill: #ffffff; }
+        body.estado-final .btn-right-svg circle { fill: #1B1B1B; }
+        body.estado-final .btn-right-svg rect { fill: #ffffff; }
+        body.estado-final #hint { color: rgba(0,0,0,0.5); }
+
+        @media (max-width: 900px) {
+            .page-titulo h1 { font-size: clamp(18px, 3vw, 37px); }
+            .page-header { padding: 14px; }
+            .page-header a svg[width="45"] { width: 36px; height: 36px; }
+            .page-header a svg[width="60"] { width: 46px; height: 46px; }
+        }
+        @media (max-width: 600px) {
+            .page-titulo h1 { font-size: 18px; }
+            .page-titulo p  { font-size: 11px; }
+            .page-header a svg[width="45"] { width: 30px; height: 30px; }
+            .page-header a svg[width="60"] { width: 38px; height: 38px; }
+        }
+
+        .page-transition-overlay {
+            position: fixed; inset: 0; z-index: 99999; background: #1b1b1b;
+            clip-path: circle(0% at 50% 100%); pointer-events: none;
+            transition: clip-path 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+        }
+        .page-transition-overlay.cobrir { clip-path: circle(150% at 50% 100%); }
+    </style>
+<script src="cursor.js" defer></script>
+</head>
+<body>
+    <div class="page-transition-overlay" id="page-transition"></div>
+    <script>
+    (function() {
+        var overlay = document.getElementById('page-transition');
+        if (!overlay) return;
+        if (sessionStorage.getItem('pageTransition') === '1') {
+            sessionStorage.removeItem('pageTransition');
+            overlay.style.transition = 'none';
+            overlay.classList.add('cobrir');
+            overlay.offsetHeight;
+            overlay.style.transition = '';
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() { overlay.classList.remove('cobrir'); });
+            });
+        }
+        window.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('a.page-link').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var url = link.getAttribute('href');
+                    sessionStorage.setItem('pageTransition', '1');
+                    overlay.classList.add('cobrir');
+                    setTimeout(function() { window.location.href = url; }, 900);
+                });
+            });
+        });
+    })();
+    </script>
+
+    <header class="page-header">
+        <a href="experiences.html" class="page-link">
+            <svg class="btn-back-svg" xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" fill="none">
+                <circle cx="22.5" cy="22.5" r="22.5"/>
+                <path d="M23.2788 13H29L20.7212 23L29 33H23.2788L15 23L23.2788 13Z"/>
+            </svg>
+        </a>
+        <div class="page-titulo">
+            <h1><a href="index.html" class="page-link">BRUNO EID</a></h1>
+            <p>Keep Moving</p>
+        </div>
+        <a href="pagina2.html" class="page-link">
+            <svg class="btn-right-svg" xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="none">
+                <circle cx="22.5" cy="37.5" r="22.5"/>
+                <circle cx="37.5" cy="22.5" r="22.5"/>
+                <rect x="25" y="25" width="10" height="10"/>
+            </svg>
+        </a>
+    </header>
+
+    <div id="hint">
+        <svg class="hint-icon" xmlns="http://www.w3.org/2000/svg" width="89" height="124" viewBox="0 0 89 124" fill="none">
+            <path d="M36.363 33.3428L40.5163 48.8428M68.8015 29.6826L81.589 77.4061C86.1586 94.4602 76.038 111.99 58.9839 116.559C41.916 121.133 24.3751 110.992 19.8213 93.9189L7.08834 46.1809C2.54463 29.1457 12.6632 11.6508 29.6949 7.09427C46.731 2.53657 64.2372 12.6483 68.8015 29.6826Z" stroke="#F4F4F4" stroke-width="12" stroke-linecap="round"/>
+        </svg>
+    </div>
+    <div id="logo-container" data-color="#ffffff" style="display:none;"></div>
+
+    <script>
+let tempo = 0
+let hint
+let frases = [
+  { texto: "The struggle itself is enough.", autor: "Albert Camus", tempo: 200, px: 0.08, py: 0.10 },
+  { texto: "Becoming is better than being.", autor: "Friedrich Nietzsche", tempo: 350, px: 0.70, py: 0.90 },
+  { texto: "To begin is human.", autor: "Hannah Arendt", tempo: 500, px: 0.06, py: 0.55 },
+  { texto: "All things flow.", autor: "Heraclitus", tempo: 650, px: 0.65, py: 0.28 },
+  { texto: "No man ever steps in the same river twice.", autor: "Heraclitus", tempo: 750, px: 0.06, py: 0.26 },
+  { texto: "Soon you will have forgotten everything; soon everything will have forgotten you.", autor: "Marcus Aurelius", tempo: 850, px: 0.04, py: 0.85 },
+  { texto: "You are afraid of dying, and yet you do not know how to live.", autor: "Seneca", tempo: 950, px: 0.60, py: 0.12 }
+]
+let glitch = false
+let glitchFrames = 0
+let fim = false
+let idleFrames = 10
+
+let rastroColorido = [];
+let rastroBranco = [];
+let matiz = 0;
+let tempoEfeito = 0;
+let tamanhoBrancoAtual = 22;
+let metaTamanhoBranco = 22;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight)
+  textAlign(CENTER, CENTER)
+  textFont('Inter')
+  hint = select('#hint')
+  colorMode(HSB, 360, 100, 100, 255)
+}
+
+function draw() {
+  if (fim) {
+    background(0, 0, 100)
+    textAlign(CENTER, CENTER)
+    fill(0)
+
+    let frasePrincipal = "Life is long, if you know how to use it."
+    let fraseHover = "For dust you are, and to dust you shall return."
+    let autorPrincipal = "Seneca"
+    let autorHover = "Genesis 3:19"
+
+    let tsz = constrain(width * 0.026, 16, 36)
+    textSize(tsz)
+    let x = width / 2
+    let y = height / 2
+    let hover = mouseX > x - width * 0.35 && mouseX < x + width * 0.35 && mouseY > y - tsz * 2 && mouseY < y + tsz * 2
+
+    if (hover) {
+      text(fraseHover, x, y)
+      textSize(tsz * 0.5)
+      text(autorHover, x, y + tsz * 1.8)
+    } else {
+      text(frasePrincipal, x, y)
+      textSize(tsz * 0.5)
+      text(autorPrincipal, x, y + tsz * 1.8)
+    }
+    return
+  }
+
+  background(0)
+
+  if (!fim && !glitch) {
+    matiz = (matiz + 1.2) % 360;
+    tempoEfeito += 0.02;
+
+    let parado = mouseX === pmouseX && mouseY === pmouseY;
+    let distancia = dist(pmouseX, pmouseY, mouseX, mouseY);
+
+    if (parado) { metaTamanhoBranco = 80; } else { metaTamanhoBranco = 22; }
+    tamanhoBrancoAtual = lerp(tamanhoBrancoAtual, metaTamanhoBranco, 0.1);
+
+    let fatorVelocidade = map(distancia, 0, 100, 1, 5, true);
+    let passos = parado ? 1 : max(distancia / 8, 1);
+
+    for (let i = 0; i < passos; i++) {
+      let x = lerp(pmouseX, mouseX, i / passos);
+      let y = lerp(pmouseY, mouseY, i / passos);
+      let forcaDistorcao = parado ? 30 : 15;
+      let offsetX = (noise(tempoEfeito, i * 0.1) - 0.5) * forcaDistorcao;
+      let offsetY = (noise(tempoEfeito + 100, i * 0.1) - 0.5) * forcaDistorcao;
+
+      rastroColorido.push(new ParticulaNebulosa(x + offsetX, y + offsetY, matiz, 40, 180, 1.3 * fatorVelocidade, false));
+      if (!parado) {
+        rastroBranco.push(new ParticulaNebulosa(x + offsetX * 0.5, y + offsetY * 0.5, 0, 20, 0, 2.5 * fatorVelocidade, true));
+      }
+    }
+
+    desenharRastro(rastroColorido);
+    desenharRastro(rastroBranco);
+    desenharFocoBranco(mouseX, mouseY, tamanhoBrancoAtual);
+  }
+
+  let movimento = dist(mouseX, mouseY, pmouseX, pmouseY)
+
+  if (movimento > 0.5) {
+    tempo += 1.5
+    idleFrames = 0
+    hint.style('opacity', '0')
+  } else {
+    tempo -= 2
+    idleFrames++
+  }
+
+  if (idleFrames > 20 && !fim) {
+    hint.style('opacity', '0.6')
+  }
+
+  tempo = constrain(tempo, 0, 1300)
+
+  if (tempo <= 0) {
+    fill(0, 0, 100)
+    textAlign(CENTER, CENTER)
+    textSize(constrain(width * 0.038, 22, 52))
+    text("Keep moving", width / 2, height / 2)
+    return
+  }
+
+  let tsz = constrain(width * 0.018, 12, 26)
+  let maxW = constrain(width * 0.34, 200, 520)
+  let pad = 24 // margem mínima das bordas
+  textAlign(LEFT, TOP)
+  textSize(tsz)
+  fill(0, 0, 100)
+
+  for (let f of frases) {
+    if (tempo > f.tempo) {
+      // clamp posição para não sair do ecrã
+      let posX = constrain(f.px * width, pad, width - maxW - pad)
+      let posY = constrain(f.py * height, 80, height - tsz * 5)
+
+      // área de hover: maxW × ~3 linhas
+      let hoverH = tsz * 3.5
+      let hover = mouseX > posX && mouseX < posX + maxW && mouseY > posY && mouseY < posY + hoverH
+
+      if (hover) {
+        textStyle(ITALIC)
+        text(f.autor, posX, posY, maxW)
+        textStyle(NORMAL)
+      } else {
+        text(f.texto, posX, posY, maxW)
+      }
+    }
+  }
+
+  let tamanhoMax
+  if (tempo < 300) {
+    tamanhoMax = map(tempo, 0, 300, 10, 380)
+  } else if (tempo < 800) {
+    tamanhoMax = map(tempo, 300, 800, 380, 740)
+  } else if (tempo < 950) {
+    tamanhoMax = map(tempo, 800, 1050, 740, 1240)
+  } else if (tempo < 1150) {
+    tamanhoMax = map(tempo, 950, 1150, 1240, 1800)
+  } else {
+    glitch = true
+  }
+
+  let hue = tempo % 360
+  noStroke()
+  for (let r = tamanhoMax; r > 0; r -= 6) {
+    let alpha = map(r, 0, tamanhoMax, 12, 0)
+    fill(hue, 100, 100, alpha)
+    ellipse(width / 2, height / 2, r, r)
+  }
+
+  if (glitch) {
+    glitchFrames++
+    if (glitchFrames < 15 || (glitchFrames > 17 && glitchFrames < 20)) {
+      background(0, 0, 100)
+    }
+    if (glitchFrames === 26) {
+      document.body.classList.add('estado-final');
+    }
+    if (glitchFrames > 25) {
+      fim = true
+    }
+  }
+}
+
+function desenharRastro(lista) {
+  for (let i = lista.length - 1; i >= 0; i--) {
+    lista[i].atualizar();
+    lista[i].desenhar();
+    if (lista[i].estaMorto()) lista.splice(i, 1);
+  }
+}
+
+class ParticulaNebulosa {
+  constructor(x, y, h, tamIni, tamFim, velSumiço, ehBranco) {
+    this.x = x; this.y = y; this.matiz = h; this.vida = 100;
+    this.tamIni = tamIni; this.tamFim = tamFim; this.velSumiço = velSumiço;
+    this.ehBranco = ehBranco; this.semente = random(1000); this.derivaY = random(-0.5, -0.1);
+  }
+  atualizar() {
+    this.vida -= this.velSumiço;
+    this.y += this.derivaY;
+    let variacao = noise(tempoEfeito + this.semente) * 20;
+    this.tamanhoAtual = map(this.vida, 100, 0, this.tamIni, this.tamFim) + variacao;
+  }
+  desenhar() {
+    if (this.tamanhoAtual <= 0.1 || this.vida <= 0) return;
+    let corCentro, corBorda;
+    if (this.ehBranco) {
+      corCentro = color(0, 0, 100, this.vida * 2.55);
+      corBorda = color(0, 0, 100, 0);
+    } else {
+      corCentro = color(this.matiz, 90, 100, this.vida * 1.02);
+      corBorda = color(this.matiz, 90, 100, 0);
+    }
+    let foco = this.ehBranco ? 0.3 : 0.0;
+    desenharCirculoEsfumado(this.x, this.y, this.tamanhoAtual, corCentro, corBorda, foco);
+  }
+  estaMorto() { return this.vida < 0; }
+}
+
+function desenharFocoBranco(x, y, d) {
+  let corCentro = color(0, 0, 100, 255);
+  let corBorda = color(0, 0, 100, 0);
+  let pulso = (noise(tempoEfeito * 3) - 0.5) * 8;
+  desenharCirculoEsfumado(x, y, d + pulso, corCentro, corBorda, 0.4);
+}
+
+function desenharCirculoEsfumado(x, y, d, c1, c2, focoIntensidade) {
+  let ctx = drawingContext;
+  let raio = d / 2;
+  if (raio <= 0.1) return;
+  let grad = ctx.createRadialGradient(x, y, 0, x, y, raio);
+  grad.addColorStop(0, c1.toString());
+  grad.addColorStop(focoIntensidade, c1.toString());
+  grad.addColorStop(1, c2.toString());
+  ctx.fillStyle = grad;
+  noStroke();
+  ellipse(x, y, d * 1.1, d * 1.1);
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+    </script>
+</body>
+</html>

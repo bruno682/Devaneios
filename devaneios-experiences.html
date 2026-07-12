@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devaneio</title>
+<script>
+  document.documentElement.style.backgroundColor = '#1b1b1b';
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;700&family=Instrument+Serif:wght@400&display=swap" rel="stylesheet">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Instrument sans";
+    background-color: #1b1b1b;
+    overflow: hidden;
+  }
+
+  .grade {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 0;
+    opacity: 0.15;
+    pointer-events: none;
+  }
+
+  .fundo-cena {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.15;
+    filter: grayscale(100%);
+    pointer-events: none;
+  }
+
+  .elemento {
+    position: absolute;
+  }
+
+  .el-diamantes {
+    left: 4%;
+    top: 38%;
+  }
+
+  .el-bolha {
+    left: 17%;
+    top: 14%;
+    width: 14vw;
+    max-width: 260px;
+  }
+
+  .el-relogio {
+    left: 56%;
+    top: 12%;
+    width: 14vw;
+    max-width: 270px;
+  }
+
+  .el-quadrado {
+    left: 55%;
+    bottom: 40px;
+    width: 120px;
+    height: 120px;
+    background: #85E861;
+  }
+
+  .el-texto {
+    left: 71%;
+    top: 44%;
+    color: #a2a2a2;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 37px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 91.8%;
+  }
+
+  .el-rosto {
+    left: 38%;
+    top: 60%;
+    width: 10vw;
+    max-width: 170px;
+  }
+
+  .canto {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 30;
+    display: block;
+  }
+
+  .texto {
+    position: relative;
+    z-index: 5;
+    color: #a2a2a2;
+    text-align: center;
+    max-width: 780px;
+    padding: 0 24px;
+    font-family: "Instrument Serif", serif;
+    font-size: 36px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 60px;
+  }
+
+  .page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #1b1b1b;
+    clip-path: circle(0% at 50% 100%);
+    pointer-events: none;
+    transition: clip-path 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+  }
+
+  .page-transition-overlay.cobrir {
+    clip-path: circle(150% at 50% 100%);
+  }
+</style>
+
+<script src="cursor.js" defer></script>
+</head>
+<body>
+  <div class="page-transition-overlay" id="page-transition"></div>
+  <script>
+  (function() {
+    var overlay = document.getElementById('page-transition');
+    if (!overlay) return;
+
+    if (sessionStorage.getItem('pageTransition') === '1') {
+      sessionStorage.removeItem('pageTransition');
+      overlay.style.transition = 'none';
+      overlay.classList.add('cobrir');
+      overlay.offsetHeight;
+      overlay.style.transition = '';
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          overlay.classList.remove('cobrir');
+        });
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('a.canto').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          var url = link.getAttribute('href');
+          sessionStorage.setItem('pageTransition', '1');
+          overlay.classList.add('cobrir');
+          setTimeout(function() { window.location.href = url; }, 900);
+        });
+      });
+    });
+  })();
+  </script>
+
+  <svg class="grade" xmlns="http://www.w3.org/2000/svg" width="1083" height="652" viewBox="0 0 1083 652" fill="none">
+    <path d="M31 0V660.872M1051 0V660.872M235 2.12758V663M847 0V660.872M439 2.12758V663M643 0V660.872M1.15842 623L1080.68 623M0 30.0001L1079.52 30M3.47539 425.333L1083 425.333M2.31684 227.667L1081.84 227.667" stroke="url(#paint0_radial_devaneio_exp)" stroke-opacity="0.9" stroke-width="2"/>
+    <defs>
+      <radialGradient id="paint0_radial_devaneio_exp" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(539.762 302.674) scale(539.762 405.04)">
+        <stop stop-color="#FAFAFA" stop-opacity="0.2"/>
+        <stop offset="1" stop-color="#EDEDED" stop-opacity="0.5"/>
+      </radialGradient>
+    </defs>
+  </svg>
+
+  <div class="fundo-cena">
+    <div class="elemento el-diamantes">
+      <svg xmlns="http://www.w3.org/2000/svg" width="161" height="221" viewBox="0 0 161 221" fill="none">
+        <path d="M80.6631 200.485L20.0002 139.822L80.1617 79.6602L140.825 140.323L80.6631 200.485Z" fill="#FFD900"/>
+        <path d="M80.1617 139.822L20.5015 80.1616L80.6631 20L140.323 79.6602L80.1617 139.822Z" fill="#1B1B1B"/>
+      </svg>
+    </div>
+
+    <img class="elemento el-bolha" src="bolha.png" alt="">
+
+    <img class="elemento el-relogio" src="Relogio exp.png" alt="">
+
+    <div class="elemento el-quadrado"></div>
+
+    <p class="elemento el-texto">KEEP<br>MOVING</p>
+
+    <img class="elemento el-rosto" src="rosto.png" alt="">
+  </div>
+
+  <a href="experiences.html" class="canto">
+    <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" fill="none">
+      <circle cx="22.5" cy="22.5" r="22.5" fill="white"/>
+      <path d="M23.2788 13H29L20.7212 23L29 33H23.2788L15 23L23.2788 13Z" fill="#1B1B1B"/>
+    </svg>
+  </a>
+
+  <div id="area-central" style="display: flex; flex-direction: column; align-items: center;">
+    <p id="texto-principal" class="texto">
+      Cada elemento mostra momentos que transformaram o meu portfólio, e que estavam invisíveis.
+    </p>
+  </div>
+</body>
+</html>

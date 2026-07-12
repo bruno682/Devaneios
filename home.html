@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bruno Eid</title>
+<script>
+  window.bgColor = '#ececec';
+  document.documentElement.style.backgroundColor = window.bgColor;
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: "Instrument Sans", sans-serif;
+    background-color: #ececec;
+  }
+
+  .rosto {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.95;
+  }
+
+  .nav {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .nav a {
+    color: #939393;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .nav a.ativo {
+    color: #1B1B1B;
+    font-weight: 600;
+  }
+
+  .titulo {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    text-align: center;
+  }
+
+  .titulo h1 {
+    margin: 0;
+    color: #1B1B1B;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 37px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+  }
+
+  .titulo p {
+    margin: 0px 0 0;
+    color: #9F9F9F;
+    text-align: center;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+    text-transform: uppercase;
+  }
+
+  .canto {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 30;
+    display: block;
+  }
+
+  .page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #1b1b1b;
+    clip-path: circle(0% at 50% 100%);
+    pointer-events: none;
+    transition: clip-path 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+  }
+
+  .page-transition-overlay.cobrir {
+    clip-path: circle(150% at 50% 100%);
+  }
+
+  #clock3d {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+  }
+
+  #clock3d canvas {
+    display: block;
+  }
+
+  #loading {
+    position: fixed;
+    inset: 0;
+    z-index: 99998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1b1b1b;
+    color: #9F9F9F;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: opacity 0.6s ease;
+  }
+
+  #cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 40;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+  }
+
+  #cursor-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #1B1B1B;
+    transition: transform 0.2s ease;
+  }
+
+  #cursor-label {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    white-space: nowrap;
+    color: #1B1B1B;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  #hint {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    color: #9F9F9F;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: opacity 1s ease;
+  }
+
+  @media (max-width: 900px) {
+    .titulo h1 { font-size: clamp(18px, 3vw, 37px); }
+    .titulo p  { font-size: 11px; }
+    .nav { gap: 5px; }
+  }
+  @media (max-width: 600px) {
+    .titulo h1 { font-size: 18px; }
+    .nav { gap: 4px; font-size: 10px; }
+  }
+
+</style>
+
+<script src="cursor.js" defer></script>
+</head>
+<body>
+  <div class="page-transition-overlay" id="page-transition"></div>
+  <script>
+  (function() {
+    var overlay = document.getElementById('page-transition');
+    if (!overlay) return;
+
+    if (sessionStorage.getItem('pageTransition') === '1') {
+      sessionStorage.removeItem('pageTransition');
+      overlay.style.transition = 'none';
+      overlay.classList.add('cobrir');
+      overlay.offsetHeight;
+      overlay.style.transition = '';
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          overlay.classList.remove('cobrir');
+        });
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('a.canto, a.page-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          var url = link.getAttribute('href');
+          sessionStorage.setItem('pageTransition', '1');
+          overlay.classList.add('cobrir');
+          setTimeout(function() { window.location.href = url; }, 900);
+        });
+      });
+    });
+  })();
+  </script>
+
+  <video class="rosto" src="Rosto G7.webm" autoplay muted loop playsinline></video>
+
+  <div id="clock3d"></div>
+
+  <div id="loading">a carregar</div>
+
+  <div id="cursor">
+    <div id="cursor-dot"></div>
+    <span id="cursor-label"></span>
+  </div>
+
+  <p id="hint">clique em um elemento do relógio</p>
+
+  <nav class="nav">
+    <a href="home.html" class="ativo">HOME</a>
+    <a href="about.html" class="page-link">ABOUT</a>
+    <a href="experiences.html" class="page-link">EXPERIENCES</a>
+    <a href="contact.html" class="page-link">CONTACT</a>
+    <a href="projects.html" class="page-link">PROJECTS</a>
+  </nav>
+
+  <div class="titulo">
+    <h1><a href="index.html" class="page-link" style="text-decoration:none;color:inherit;">BRUNO EID</a></h1>
+    <p>Designer de interação</p>
+  </div>
+
+  <a href="devaneios-home.html" class="canto page-link" style="display: block;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="none">
+      <circle cx="22.5" cy="37.5" r="22.5" fill="#1B1B1B"/>
+      <circle cx="37.5" cy="22.5" r="22.5" fill="#1B1B1B"/>
+      <rect id="canto-rect" x="25" y="25" width="10" height="10" fill="#FFED85"/>
+    </svg>
+  </a>
+
+<script>
+  var cantoRect = document.getElementById('canto-rect');
+  if (cantoRect && window.bgColor) cantoRect.setAttribute('fill', window.bgColor);
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+// ─── SETUP ───────────────────────────────────────────────────────────────────
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xececec);
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 100);
+camera.position.set(0, 0, 5);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+document.getElementById('clock3d').appendChild(renderer.domElement);
+
+// ─── LUZES NEUTRAS + AMBIENTE LIMPO ──────────────────────────────────────────
+// Ambiente tipo "estúdio" para reflexos suaves no metal, sem precisar de um .hdr externo
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambient);
+
+const key = new THREE.DirectionalLight(0xffffff, 1.8);
+key.position.set(3, 5, 4);
+key.castShadow = true;
+scene.add(key);
+
+const fill = new THREE.DirectionalLight(0xffffff, 0.6);
+fill.position.set(-4, 2, 3);
+scene.add(fill);
+
+// ─── CARREGAR GLB ────────────────────────────────────────────────────────────
+const loader = new GLTFLoader();
+let clock3D = null;
+
+const SECTION_NAMES = {
+  about: ['about', 'About', 'ABOUT', 'bateria', 'Bateria'],
+  projects: ['projects', 'Projects', 'PROJECTS', 'bobina', 'Bobina'],
+  experiences: ['experiences', 'Experiences', 'EXPERIENCES', 'cristal', 'Cristal'],
+  contact: ['contact', 'Contact', 'CONTACT'],
+  hour: ['hour', 'Hour', 'Horas', 'ponteiro_horas', 'Ponteiro_horas', 'hand_hour', 'HourHand'],
+  minute: ['minute', 'Minute', 'Minutos', 'ponteiro_minutos', 'Ponteiro_minutos', 'hand_minute', 'MinuteHand'],
+  second: ['second', 'Second', 'Segundos', 'ponteiro_segundos', 'Ponteiro_segundos', 'hand_second', 'SecondHand'],
+  gearBig: ['engrenagem_grande', 'Engrenagem_grande', 'EngrenagemGrande', 'gear_big', 'GearBig', 'gear_large', 'GearLarge'],
+  gearSmall: ['engrenagem_pequena', 'Engrenagem_pequena', 'EngrenagemPequena', 'gear_small', 'GearSmall'],
+};
+
+const LABELS = {
+  about: 'About',
+  projects: 'Projects',
+  experiences: 'Experiences',
+  contact: 'Contact',
+};
+
+let hourHand = null;
+let minuteHand = null;
+let secondHand = null;
+let gearBig = null;
+let gearSmall = null;
+const sectionMeshes = {};
+const allMeshes = [];
+
+function matchSection(name) {
+  for (const [key, aliases] of Object.entries(SECTION_NAMES)) {
+    if (aliases.some(a => name.toLowerCase().includes(a.toLowerCase()))) return key;
+  }
+  return null;
+}
+
+// Material único e limpo para todas as peças — remove qualquer material
+// estranho/incompatível vindo do GLB e garante metal liso e reflexivo
+function cleanMetalMaterial(oldMat) {
+  const baseColor = (oldMat && oldMat.color) ? oldMat.color.clone() : new THREE.Color(0xd6d6d6);
+  return new THREE.MeshStandardMaterial({
+    color: baseColor,
+    map: oldMat ? oldMat.map : null,
+    metalness: 1,
+    roughness: 0.35,
+    envMapIntensity: 1,
+  });
+}
+
+loader.load('Relogio fbaup.glb', gltf => {
+  clock3D = gltf.scene;
+
+  const box = new THREE.Box3().setFromObject(clock3D);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const scale = 2.8 / maxDim;
+
+  clock3D.position.sub(center.multiplyScalar(scale));
+  clock3D.scale.setScalar(scale);
+
+  clock3D.traverse(obj => {
+    if (!obj.isMesh) return;
+    obj.castShadow = true;
+    obj.receiveShadow = true;
+
+    const cleanMat = cleanMetalMaterial(obj.material);
+    obj.material = cleanMat;
+    obj.userData.matOriginal = cleanMat.clone();
+
+    const section = matchSection(obj.name);
+    if (section) {
+      if (section === 'hour') hourHand = obj;
+      else if (section === 'minute') minuteHand = obj;
+      else if (section === 'second') secondHand = obj;
+      else if (section === 'gearBig') gearBig = obj;
+      else if (section === 'gearSmall') gearSmall = obj;
+      else {
+        sectionMeshes[section] = sectionMeshes[section] || [];
+        sectionMeshes[section].push(obj);
+        allMeshes.push({ mesh: obj, section });
+      }
+    }
+    // peças sem secção mapeada (decorativas) ficam fora da lista de raycast
+    // para não bloquearem cliques nos elementos clicáveis que estão atrás delas
+  });
+
+  scene.add(clock3D);
+  baseScale = clock3D.scale.x;
+  clock3D.scale.setScalar(baseScale * scaleFactor());
+
+  const loadEl = document.getElementById('loading');
+  loadEl.style.opacity = '0';
+  setTimeout(() => loadEl.style.display = 'none', 600);
+}, undefined, err => {
+  console.error('Erro a carregar GLB:', err);
+  var loadEl = document.getElementById('loading');
+  if (loadEl) loadEl.textContent = 'erro ao carregar o modelo';
+});
+
+// ─── HORA REAL ───────────────────────────────────────────────────────────────
+const clockText = document.getElementById('clock-text');
+
+function updateClock() {
+  const now = new Date();
+  const h = now.getHours();
+  const m = now.getMinutes();
+  const s = now.getSeconds();
+  const ms = now.getMilliseconds();
+
+  const degH = (h % 12 + m / 60) * 30;
+  const degM = (m + s / 60) * 6;
+  const degS = s * 6;
+
+  const toRad = d => d * Math.PI / 180;
+
+  if (hourHand) hourHand.rotation.y = -toRad(degH);
+  if (minuteHand) minuteHand.rotation.y = -toRad(degM);
+  if (secondHand) secondHand.rotation.y = -toRad(degS);
+
+  if (clockText) {
+    const hh = String(h).padStart(2, '0');
+    const mm = String(m).padStart(2, '0');
+    const ss = String(s).padStart(2, '0');
+    clockText.textContent = `${hh}:${mm}:${ss}`;
+  }
+}
+
+setInterval(updateClock, 50);
+
+// ─── PARALLAX & HOVER ────────────────────────────────────────────────────────
+let mouseX = 0, mouseY = 0;
+let targetRotX = 0, targetRotY = 0;
+let currentRotX = 0, currentRotY = 0;
+const baseRotX = Math.PI / 2;
+
+const cursorEl = document.getElementById('cursor');
+const cursorDot = document.getElementById('cursor-dot');
+const cursorLabel = document.getElementById('cursor-label');
+
+const raycaster = new THREE.Raycaster();
+const mouse2D = new THREE.Vector2();
+let hoveredSection = null;
+
+window.addEventListener('mousemove', e => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+
+  if (cursorEl) {
+    cursorEl.style.left = e.clientX + 'px';
+    cursorEl.style.top = e.clientY + 'px';
+  }
+
+  mouse2D.x = (e.clientX / innerWidth) * 2 - 1;
+  mouse2D.y = -(e.clientY / innerHeight) * 2 + 1;
+
+  targetRotY = ((e.clientX / innerWidth) - 0.5) * 0.09;
+  targetRotX = -((e.clientY / innerHeight) - 0.5) * 0.06;
+});
+
+function detectHover() {
+  if (!clock3D || allMeshes.length === 0) return;
+
+  raycaster.setFromCamera(mouse2D, camera);
+  const targets = allMeshes.map(m => m.mesh);
+  const hits = raycaster.intersectObjects(targets, false);
+
+  let found = null;
+  if (hits.length > 0) {
+    const hit = hits[0].object;
+    const entry = allMeshes.find(m => m.mesh === hit);
+    if (entry && entry.section && LABELS[entry.section]) {
+      found = entry.section;
+    }
+  }
+
+  if (found !== hoveredSection) {
+    if (hoveredSection && sectionMeshes[hoveredSection]) {
+      sectionMeshes[hoveredSection].forEach(m => {
+        if (m.userData.matOriginal) m.material = m.userData.matOriginal.clone();
+      });
+    }
+
+    hoveredSection = found;
+
+    if (found) {
+      if (cursorDot) cursorDot.style.transform = 'scale(1.6)';
+
+      if (sectionMeshes[found]) {
+        sectionMeshes[found].forEach(m => {
+          const mat = m.userData.matOriginal.clone();
+          mat.emissive.setHex(0x222222);
+          mat.emissiveIntensity = 0.3;
+          m.material = mat;
+        });
+      }
+    } else {
+      if (cursorLabel) cursorLabel.style.opacity = '0';
+      if (cursorDot) cursorDot.style.transform = 'scale(1)';
+    }
+  }
+}
+
+const sectionRoutes = {
+  about: 'about.html',
+  experiences: 'experiences.html',
+  contact: 'contact.html',
+  projects: 'projects.html',
+};
+
+renderer.domElement.addEventListener('click', () => {
+  if (!clock3D || allMeshes.length === 0) return;
+
+  // recalcula o raycast no momento exacto do clique, em vez de confiar no
+  // hoveredSection (que só é actualizado a cada 4 frames e pode estar desactualizado)
+  raycaster.setFromCamera(mouse2D, camera);
+  const targets = allMeshes.map(m => m.mesh);
+  const hits = raycaster.intersectObjects(targets, false);
+  if (hits.length === 0) return;
+
+  const entry = allMeshes.find(m => m.mesh === hits[0].object);
+  const section = entry && entry.section;
+  if (!section || !sectionRoutes[section]) return;
+
+  const overlay = document.getElementById('page-transition');
+  sessionStorage.setItem('pageTransition', '1');
+  if (overlay) {
+    overlay.classList.add('cobrir');
+    setTimeout(() => { window.location.href = sectionRoutes[section]; }, 900);
+  } else {
+    window.location.href = sectionRoutes[section];
+  }
+});
+
+// ─── ANIMAÇÃO ─────────────────────────────────────────────────────────────────
+let frameN = 0;
+let hintFaded = false;
+const hint = document.getElementById('hint');
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  currentRotX += (targetRotX - currentRotX) * 0.06;
+  currentRotY += (targetRotY - currentRotY) * 0.06;
+
+  if (clock3D) {
+    clock3D.rotation.x = currentRotX + baseRotX;
+    clock3D.rotation.y = currentRotY;
+
+    const breath = Math.sin(t * 0.4) * 0.003;
+    clock3D.rotation.z = breath;
+  }
+
+  if (gearBig) gearBig.rotation.y = t * 0.06;
+  if (gearSmall) gearSmall.rotation.y = t * 0.236;
+
+  frameN++;
+  if (frameN % 4 === 0) detectHover();
+
+  if (!hintFaded && t > 6) {
+    if (hint) hint.style.opacity = '0';
+    hintFaded = true;
+  }
+
+  renderer.render(scene, camera);
+}
+
+animate();
+updateClock();
+
+// ─── RESIZE ───────────────────────────────────────────────────────────────────
+function scaleFactor() {
+  if (innerWidth >= 1200) return 1.0;
+  if (innerWidth >= 900)  return 0.78;
+  if (innerWidth >= 600)  return 0.58;
+  return 0.58;
+}
+
+let baseScale = null;
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  if (clock3D && baseScale !== null) {
+    clock3D.scale.setScalar(baseScale * scaleFactor());
+  }
+});
+</script>
+</body>
+</html>

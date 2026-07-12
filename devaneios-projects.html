@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devaneio</title>
+<script>
+  document.documentElement.style.backgroundColor = '#1b1b1b';
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400&family=Instrument+Serif:wght@400&display=swap" rel="stylesheet">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Instrument sans";
+    background-color: #1b1b1b;
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    opacity: 0.15;
+  }
+
+  .canto {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 30;
+    display: block;
+  }
+
+  .texto {
+    position: relative;
+    z-index: 5;
+    color: #a2a2a2;
+    text-align: center;
+    max-width: 780px;
+    padding: 0 24px;
+    font-family: "Instrument Serif", serif;
+    font-size: 36px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 60px;
+  }
+
+  .continuar {
+    position: relative;
+    z-index: 5;
+    margin-top: 20px;
+    color: #a2a2a2;
+    text-align: center;
+    font-family: "Instrument sans";
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 400;
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+
+  .page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #1b1b1b;
+    clip-path: circle(0% at 50% 100%);
+    pointer-events: none;
+    transition: clip-path 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+  }
+
+  .page-transition-overlay.cobrir {
+    clip-path: circle(150% at 50% 100%);
+  }
+
+  .creditos {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10;
+    max-width: 260px;
+    color: #a2a2a2;
+    text-align: right;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    opacity: 0.5;
+  }
+
+  .creditos a {
+    color: #a2a2a2;
+    text-decoration: underline;
+  }
+</style>
+
+<script src="cursor.js" defer></script>
+</head>
+<body>
+  <div class="page-transition-overlay" id="page-transition"></div>
+  <script>
+  (function() {
+    var overlay = document.getElementById('page-transition');
+    if (!overlay) return;
+
+    if (sessionStorage.getItem('pageTransition') === '1') {
+      sessionStorage.removeItem('pageTransition');
+      overlay.style.transition = 'none';
+      overlay.classList.add('cobrir');
+      overlay.offsetHeight;
+      overlay.style.transition = '';
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          overlay.classList.remove('cobrir');
+        });
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('a.canto').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          var url = link.getAttribute('href');
+          sessionStorage.setItem('pageTransition', '1');
+          overlay.classList.add('cobrir');
+          setTimeout(function() { window.location.href = url; }, 900);
+        });
+      });
+    });
+  })();
+  </script>
+
+  <p class="creditos">3D feito com Blender e animado <br> baseado no <a href="https://www.youtube.com/watch?v=dLYMzNmILQA&t=348s" target="_blank" rel="noopener">vídeo</a>.</p>
+
+  <a href="projects.html" class="canto">
+    <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" fill="none">
+      <circle cx="22.5" cy="22.5" r="22.5" fill="white"/>
+      <path d="M23.2788 13H29L20.7212 23L29 33H23.2788L15 23L23.2788 13Z" fill="#1B1B1B"/>
+    </svg>
+  </a>
+
+  <div id="area-central" style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+    <p id="texto-principal" class="texto">
+      Os meus projectos são uma<br>
+      tentativa de transcender o tempo.
+    </p>
+
+    <p id="continuar" class="continuar">clique para continuar</p>
+  </div>
+
+<script>
+  setTimeout(function() {
+    var continuar = document.getElementById('continuar');
+    if (continuar) continuar.style.opacity = '1';
+  }, 2000);
+
+  document.getElementById('area-central').addEventListener('click', function() {
+    var textoPrincipal = document.getElementById('texto-principal');
+    var continuar = document.getElementById('continuar');
+    if (textoPrincipal) {
+      textoPrincipal.innerHTML = 'Não após eu passar pelo mundo, mas </br> enquanto passo por quem eu sou.';
+    }
+    if (continuar) {
+      continuar.style.opacity = '0';
+    }
+  });
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x000000, 0);
+document.body.appendChild(renderer.domElement);
+renderer.domElement.style.touchAction = 'none';
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2(-1000, -1000);
+const mousePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+const mousePos3D = new THREE.Vector3(-1000, -1000, -1000);
+let mouseX = 0, mouseY = 0;
+
+window.addEventListener('pointermove', (event) => {
+    mouse.x =  (event.clientX / window.innerWidth)  * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    mouseX = event.clientX;
+    mouseY = event.clientY;
+});
+
+const particles = [];
+const loader = new GLTFLoader();
+const repulsionShaders = [];
+
+function updateRepulsion() {
+    const val = window.innerWidth < 900 ? 0.35 : 1.0;
+    repulsionShaders.forEach(s => { if (s.uniforms.uRepulsion) s.uniforms.uRepulsion.value = val; });
+}
+
+function loadModelAsParticles(path, positionX, positionY = 0, rotationX = 0, rotationY = 0, scale = 1) {
+    loader.load(path, (gltf) => {
+        const originalMesh = gltf.scene.children[0];
+        const geometry = originalMesh.geometry;
+
+        if (rotationX !== 0) geometry.rotateX(rotationX);
+        if (rotationY !== 0) geometry.rotateY(rotationY);
+
+        const count = geometry.attributes.position.count;
+        const colors = new Float32Array(count * 3);
+        const baseColor = new THREE.Color(0xd6d6d6);
+
+        for (let i = 0; i < count; i++) {
+            colors[i * 3]     = baseColor.r;
+            colors[i * 3 + 1] = baseColor.g;
+            colors[i * 3 + 2] = baseColor.b;
+        }
+
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const pointsMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.025,
+            transparent: true,
+            sizeAttenuation: true,
+            vertexColors: true
+        });
+
+        pointsMaterial.onBeforeCompile = (shader) => {
+            shader.uniforms.uMousePos = { value: mousePos3D };
+            shader.uniforms.uRepulsion = { value: 1.0 };
+            repulsionShaders.push(shader);
+            shader.vertexShader = `uniform vec3 uMousePos;\nuniform float uRepulsion;\n` + shader.vertexShader;
+            shader.vertexShader = shader.vertexShader.replace(
+                `#include <project_vertex>`,
+                `
+                vec4 worldPosition = modelMatrix * vec4(transformed, 1.0);
+                float dist = distance(worldPosition.xyz, uMousePos);
+                float maxDist = 1.0 * uRepulsion;
+                if (dist < maxDist) {
+                    vec3 dir = normalize(worldPosition.xyz - uMousePos);
+                    float force = pow((maxDist - dist) / maxDist, 2.0) * 1.5 * uRepulsion;
+                    worldPosition.xyz += dir * force;
+                }
+                vec4 mvPosition = viewMatrix * worldPosition;
+                gl_Position = projectionMatrix * mvPosition;
+                `
+            );
+        };
+
+        const particleSystem = new THREE.Points(geometry, pointsMaterial);
+        particleSystem.position.x = positionX;
+        particleSystem.position.y = positionY;
+        if (scale !== 1) particleSystem.scale.set(scale, scale, scale);
+
+        particleSystem.userData.baseScale = particleSystem.scale.x;
+        particleSystem.userData.desktopX  = positionX;
+        particleSystem.userData.desktopY  = positionY;
+
+        scene.add(particleSystem);
+        particles.push(particleSystem);
+        applyLayout();
+        updateRepulsion();
+    });
+}
+
+const W_FULL   = 1200;
+const W_GRID   = 750;
+
+const GRID_POSITIONS = [
+    [-0.7,  1.3],
+    [ 0.7,  1.3],
+    [-0.7,  0.1],
+    [ 0.7,  0.1],
+];
+
+function lerp(a, b, t) { return a + (b - a) * Math.max(0, Math.min(1, t)); }
+
+function applyLayout() {
+    if (particles.length === 0) return;
+    const w = window.innerWidth;
+    const t = (w - W_GRID) / (W_FULL - W_GRID);
+    const useGrid = w < W_GRID;
+
+    particles.forEach((p, i) => {
+        const base = p.userData.baseScale || p.scale.x;
+
+        if (useGrid) {
+            p.position.x = GRID_POSITIONS[i][0];
+            p.position.y = GRID_POSITIONS[i][1];
+            p.scale.setScalar(base * 0.55);
+        } else {
+            const xFactor = lerp(0.45, 1.0, t);
+            const sFactor = lerp(0.60, 1.0, t);
+            p.position.x = p.userData.desktopX * xFactor;
+            p.position.y = p.userData.desktopY;
+            p.scale.setScalar(base * sFactor);
+        }
+    });
+}
+
+loadModelAsParticles('3D/Who Corrodit.glb', -3.4, 1, 0, 0, 0.8);
+loadModelAsParticles('3D/Who Breu.glb', -1.3, 1, Math.PI / 2, 4, 0.6);
+loadModelAsParticles('3D/Who Ovar.glb', 0.9, 1, 0, 0, 0.7);
+loadModelAsParticles('3D/Who Enklav.glb', 3, 1, 0, 0, 0.7);
+
+camera.position.z = 5;
+camera.position.y = 1.0;
+camera.lookAt(scene.position);
+
+const bgGeometry = new THREE.BufferGeometry();
+const bgCount = 5000;
+const bgPos = new Float32Array(bgCount * 3);
+const bgColors = new Float32Array(bgCount * 3);
+
+for (let i = 0; i < bgCount; i++) {
+    bgPos[i * 3]     = (Math.random() - 0.5) * 15;
+    bgPos[i * 3 + 1] = (Math.random() - 0.5) * 15;
+    bgPos[i * 3 + 2] = (Math.random() - 0.5) * 15;
+    const c = new THREE.Color().setHSL(0, 0, 0.55 + Math.random() * 0.35);
+    bgColors[i * 3] = c.r; bgColors[i * 3 + 1] = c.g; bgColors[i * 3 + 2] = c.b;
+}
+
+bgGeometry.setAttribute('position', new THREE.BufferAttribute(bgPos, 3));
+bgGeometry.setAttribute('color', new THREE.BufferAttribute(bgColors, 3));
+
+const bgMesh = new THREE.Points(bgGeometry, new THREE.PointsMaterial({
+    size: 0.025,
+    color: 0xffffff,
+    transparent: true,
+    vertexColors: true
+}));
+scene.add(bgMesh);
+
+const clock = new THREE.Clock();
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    raycaster.setFromCamera(mouse, camera);
+    if (!raycaster.ray.intersectPlane(mousePlane, mousePos3D)) {
+        mousePos3D.set(-1000, -1000, -1000);
+    }
+
+    const t = clock.getElapsedTime();
+    bgMesh.rotation.y = t * 0.04;
+    if (mouseX > 0) {
+        bgMesh.rotation.x = -mouseY * (t * 0.00001);
+        bgMesh.rotation.y =  mouseX * (t * 0.00001);
+    }
+
+    renderer.render(scene, camera);
+}
+
+animate();
+
+window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    applyLayout();
+    updateRepulsion();
+});
+</script>
+</body>
+</html>

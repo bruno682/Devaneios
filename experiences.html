@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bruno Eid — Experiências</title>
+<script>
+  document.documentElement.style.backgroundColor = '#ffffff';
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:wght@400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: #ffffff;
+    font-family: "Instrument Sans", sans-serif;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 20px;
+  }
+
+  .titulo {
+    text-align: center;
+  }
+
+  .titulo h1 {
+    margin: 0;
+    color: #1B1B1B;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 37px;
+    font-weight: 700;
+    line-height: normal;
+    text-decoration: none;
+  }
+
+  .titulo h1 a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .titulo p {
+    margin: 0;
+    color: #9F9F9F;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: normal;
+    text-transform: uppercase;
+  }
+
+  /* ── LINHAS DE GRELHA ── */
+  .grade {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ── ELEMENTOS SOLTOS ── */
+  .cena {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .elemento {
+    position: absolute;
+  }
+
+  .el-diamantes {
+    left: 4%;
+    top: 38%;
+  }
+
+  .el-bolha {
+    left: 17%;
+    top: 14%;
+    width: 14vw;
+    max-width: 260px;
+  }
+
+  .el-relogio {
+    left: 56%;
+    top: 12%;
+    width: 14vw;
+    max-width: 270px;
+  }
+
+  .el-quadrado {
+    left: 55%;
+    bottom: 40px;
+    width: 120px;
+    height: 120px;
+    background: #85E861;
+    box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.20);
+  }
+
+  .el-texto {
+    left: 71%;
+    top: 44%;
+    color: #1B1B1B;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 37px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 91.8%;
+  }
+
+  .el-rosto {
+    left: 38%;
+    top: 60%;
+    width: 10vw;
+    max-width: 170px;
+  }
+
+  /* ── DICA DE INTERAÇÃO ── */
+  .dica-clique {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    pointer-events: none;
+  }
+
+  .dica-clique p {
+    margin: 0;
+    color: #9F9F9F;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── VÍDEOS DE ELEMENTOS — usado pela bolha e pelo relógio ── */
+  .video-overlay-elemento {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+
+  .video-overlay-elemento.ativo {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .video-overlay-elemento video {
+    max-width: 90vw;
+    max-height: 90vh;
+  }
+
+  /* ── GALERIAS DE ELEMENTOS — carrossel vertical que se move com o scroll ── */
+  .img-gallery-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: #0d0d0d;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+
+  .img-gallery-overlay.ativo {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .img-gallery-track {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+  }
+
+  .img-gallery-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .img-gallery-slide {
+    width: 100%;
+    height: 80vh;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .img-gallery-slide img {
+    max-width: 82vw;
+    max-height: 100%;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+  }
+
+  .img-gallery-close {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 2;
+    cursor: pointer;
+  }
+
+  .img-gallery-counter {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    z-index: 2;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 600px) {
+    .img-gallery-slide { height: 74vh; }
+    .img-gallery-slide img { max-width: 88vw; }
+  }
+
+  /* ── TRANSIÇÃO ── */
+  .page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #1b1b1b;
+    clip-path: circle(0% at 50% 100%);
+    pointer-events: none;
+    transition: clip-path 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+  }
+
+  .page-transition-overlay.cobrir {
+    clip-path: circle(150% at 50% 100%);
+  }
+
+  @media (max-width: 900px) {
+    .titulo h1 { font-size: clamp(18px, 3vw, 37px); }
+    .el-texto { font-size: clamp(22px, 4vw, 37px); }
+    .el-bolha, .el-relogio { width: 18vw; }
+    .el-quadrado { width: 100px; height: 100px; }
+    .grade { width: 100%; }
+  }
+  @media (max-width: 600px) {
+    .titulo h1 { font-size: 18px; }
+    .el-texto { font-size: 22px; }
+    .dica-clique p { font-size: 9px; }
+    .dica-clique { bottom: 16px; }
+  }
+</style>
+
+<script src="cursor.js" defer></script>
+</head>
+<body>
+  <svg class="grade" xmlns="http://www.w3.org/2000/svg" width="1083" height="652" viewBox="0 0 1083 652" fill="none">
+    <path d="M31 0V660.872M1051 0V660.872M235 2.12758V663M847 0V660.872M439 2.12758V663M643 0V660.872M1.15842 623L1080.68 623M0 30.0001L1079.52 30M3.47539 425.333L1083 425.333M2.31684 227.667L1081.84 227.667" stroke="url(#paint0_radial_124_294)" stroke-opacity="0.9" stroke-width="2"/>
+    <defs>
+      <radialGradient id="paint0_radial_124_294" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(539.762 302.674) scale(539.762 405.04)">
+        <stop stop-color="#FAFAFA" stop-opacity="0.2"/>
+        <stop offset="1" stop-color="#EDEDED" stop-opacity="0.5"/>
+      </radialGradient>
+    </defs>
+  </svg>
+
+  <div class="page-transition-overlay" id="page-transition"></div>
+  <script>
+  (function() {
+    var overlay = document.getElementById('page-transition');
+    if (!overlay) return;
+    if (sessionStorage.getItem('pageTransition') === '1') {
+      sessionStorage.removeItem('pageTransition');
+      overlay.style.transition = 'none';
+      overlay.classList.add('cobrir');
+      overlay.offsetHeight;
+      overlay.style.transition = '';
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { overlay.classList.remove('cobrir'); });
+      });
+    }
+    window.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('a.page-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          var url = link.getAttribute('href');
+          sessionStorage.setItem('pageTransition', '1');
+          overlay.classList.add('cobrir');
+          setTimeout(function() { window.location.href = url; }, 900);
+        });
+      });
+    });
+  })();
+  </script>
+
+  <header class="header">
+    <!-- Botão voltar -->
+    <a href="home.html" class="page-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" fill="none">
+        <circle cx="22.5" cy="22.5" r="22.5" fill="#1B1B1B"/>
+        <path d="M23.2788 13H29L20.7212 23L29 33H23.2788L15 23L23.2788 13Z" fill="white"/>
+      </svg>
+    </a>
+
+    <!-- Título central -->
+    <div class="titulo">
+      <h1><a href="index.html" class="page-link">BRUNO EID</a></h1>
+      <p>Experiências</p>
+    </div>
+
+    <!-- Botão direito (página preta) -->
+    <a href="devaneios-experiences.html" class="page-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <circle cx="22.5" cy="37.5" r="22.5" fill="#1B1B1B"/>
+        <circle cx="37.5" cy="22.5" r="22.5" fill="#1B1B1B"/>
+        <rect x="25" y="25" width="10" height="10" fill="white"/>
+      </svg>
+    </a>
+  </header>
+
+  <div class="cena">
+    <div class="elemento el-diamantes" id="diamantes-link" style="pointer-events:auto;cursor:pointer;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="161" height="221" viewBox="0 0 161 221" fill="none">
+        <g filter="url(#filter0_d_128_3)">
+          <path d="M80.6631 200.485L20.0002 139.822L80.1617 79.6602L140.825 140.323L80.6631 200.485Z" fill="#FFD900"/>
+          <path d="M80.1617 139.822L20.5015 80.1616L80.6631 20L140.323 79.6602L80.1617 139.822Z" fill="#1B1B1B"/>
+        </g>
+        <defs>
+          <filter id="filter0_d_128_3" x="0" y="0" width="160.825" height="220.485" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+            <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+            <feOffset/>
+            <feGaussianBlur stdDeviation="10"/>
+            <feComposite in2="hardAlpha" operator="out"/>
+            <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0"/>
+            <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_128_3"/>
+            <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_128_3" result="shape"/>
+          </filter>
+        </defs>
+      </svg>
+    </div>
+
+    <img class="elemento el-bolha" src="bolha.png" alt="" data-hitscale="0.8" id="bolha-link" style="pointer-events:auto;cursor:pointer;">
+
+    <img class="elemento el-relogio" src="Relogio exp.png" alt="" data-hitscale="0.78" id="relogio-link" style="pointer-events:auto;cursor:pointer;">
+
+    <div class="elemento el-quadrado" id="quadrado-link" style="pointer-events:auto;cursor:pointer;"></div>
+
+    <p class="elemento el-texto" id="keep-moving-link" style="pointer-events:auto;cursor:pointer;">KEEP<br>MOVING</p>
+
+    <img class="elemento el-rosto" src="rosto.png" alt="" data-hitscale="0.82" id="rosto-link" style="pointer-events:auto;cursor:pointer;">
+  </div>
+
+  <div class="dica-clique">
+    <p>clique numa experiência</p>
+  </div>
+
+  <div class="video-overlay-elemento" id="bolha-video-overlay">
+    <video id="bolha-video" src="bubbles.mp4" playsinline></video>
+  </div>
+
+  <div class="video-overlay-elemento" id="relogio-video-overlay">
+    <video id="relogio-video" src="Rolex animation.mp4" playsinline></video>
+  </div>
+
+  <div class="img-gallery-overlay" id="diamantes-gallery-overlay">
+    <div class="img-gallery-close" id="diamantes-gallery-close">
+      <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" fill="none">
+        <circle cx="22.5" cy="22.5" r="22.5" fill="#1B1B1B"/>
+        <path d="M23.2788 13H29L20.7212 23L29 33H23.2788L15 23L23.2788 13Z" fill="white"/>
+      </svg>
+    </div>
+    <div class="img-gallery-track" id="diamantes-gallery-track"></div>
+    <div class="img-gallery-counter" id="diamantes-gallery-counter"></div>
+  </div>
+
+  <div class="img-gallery-overlay" id="quadrado-gallery-overlay">
+    <div class="img-gallery-close" id="quadrado-gallery-close">
+      <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" fill="none">
+        <circle cx="22.5" cy="22.5" r="22.5" fill="#1B1B1B"/>
+        <path d="M23.2788 13H29L20.7212 23L29 33H23.2788L15 23L23.2788 13Z" fill="white"/>
+      </svg>
+    </div>
+    <div class="img-gallery-track" id="quadrado-gallery-track"></div>
+    <div class="img-gallery-counter" id="quadrado-gallery-counter"></div>
+  </div>
+
+<script>
+  function iniciarMovimento() {
+    var elementos = Array.prototype.slice.call(document.querySelectorAll('.elemento'));
+    var topoLimite = 110; // não passa por baixo do cabeçalho
+
+    var objetos = elementos.map(function(el) {
+      var rect = el.getBoundingClientRect();
+      var escala = parseFloat(el.dataset.hitscale) || 1;
+      var w = rect.width * escala;
+      var h = rect.height * escala;
+      var offX = (rect.width - w) / 2;
+      var offY = (rect.height - h) / 2;
+      var x = rect.left + offX;
+      var y = rect.top + offY;
+
+      el.style.position = 'fixed';
+      el.style.left = '0px';
+      el.style.top = '0px';
+      el.style.margin = '0';
+      el.style.transform = 'translate(' + (x - offX) + 'px,' + (y - offY) + 'px)';
+
+      var velocidade = 1 + Math.random() * 0.8;
+      var angulo = Math.random() * Math.PI * 2;
+
+      return {
+        el: el,
+        x: x, y: y,
+        w: w, h: h,
+        offX: offX, offY: offY,
+        visW: rect.width, visH: rect.height,
+        vx: Math.cos(angulo) * velocidade,
+        vy: Math.sin(angulo) * velocidade
+      };
+    });
+
+    function colidirParedes(o) {
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      var visLeft = o.x - o.offX;
+      var visTop = o.y - o.offY;
+      var visRight = visLeft + o.visW;
+      var visBottom = visTop + o.visH;
+
+      if (visLeft <= 0) { o.x = o.offX; o.vx = Math.abs(o.vx); }
+      if (visRight >= vw) { o.x = vw - o.visW + o.offX; o.vx = -Math.abs(o.vx); }
+      if (visTop <= topoLimite) { o.y = topoLimite + o.offY; o.vy = Math.abs(o.vy); }
+      if (visBottom >= vh) { o.y = vh - o.visH + o.offY; o.vy = -Math.abs(o.vy); }
+    }
+
+    function colidirEntreSi() {
+      for (var i = 0; i < objetos.length; i++) {
+        for (var j = i + 1; j < objetos.length; j++) {
+          var a = objetos[i], b = objetos[j];
+          var sobreposX = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+          var sobreposY = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+
+          if (sobreposX > 0 && sobreposY > 0) {
+            if (sobreposX < sobreposY) {
+              var empurraoX = sobreposX / 2;
+              if (a.x < b.x) { a.x -= empurraoX; b.x += empurraoX; }
+              else { a.x += empurraoX; b.x -= empurraoX; }
+              var tvx = a.vx; a.vx = b.vx; b.vx = tvx;
+            } else {
+              var empurraoY = sobreposY / 2;
+              if (a.y < b.y) { a.y -= empurraoY; b.y += empurraoY; }
+              else { a.y += empurraoY; b.y -= empurraoY; }
+              var tvy = a.vy; a.vy = b.vy; b.vy = tvy;
+            }
+          }
+        }
+      }
+    }
+
+    function passo() {
+      objetos.forEach(function(o) {
+        o.x += o.vx;
+        o.y += o.vy;
+        colidirParedes(o);
+      });
+
+      colidirEntreSi();
+
+      objetos.forEach(function(o) {
+        o.el.style.transform = 'translate(' + (o.x - o.offX) + 'px,' + (o.y - o.offY) + 'px)';
+      });
+
+      requestAnimationFrame(passo);
+    }
+
+    requestAnimationFrame(passo);
+  }
+
+  if (document.readyState === 'complete') {
+    iniciarMovimento();
+  } else {
+    window.addEventListener('load', iniciarMovimento);
+  }
+
+  document.getElementById('keep-moving-link').addEventListener('click', function() {
+    var overlay = document.getElementById('page-transition');
+    if (!overlay) { window.location.href = 'moving.html'; return; }
+    sessionStorage.setItem('pageTransition', '1');
+    overlay.classList.add('cobrir');
+    setTimeout(function() { window.location.href = 'moving.html'; }, 900);
+  });
+
+  document.getElementById('rosto-link').addEventListener('click', function() {
+    var overlay = document.getElementById('page-transition');
+    if (!overlay) { window.location.href = 'draw.html'; return; }
+    sessionStorage.setItem('pageTransition', '1');
+    overlay.classList.add('cobrir');
+    setTimeout(function() { window.location.href = 'draw.html'; }, 900);
+  });
+
+  // Vídeo em ecrã inteiro ao clicar num elemento — usado pela bolha e pelo relógio.
+  function criarVideoElemento(linkId, overlayId, videoId) {
+    var link = document.getElementById(linkId);
+    var overlay = document.getElementById(overlayId);
+    var video = document.getElementById(videoId);
+
+    link.addEventListener('click', function() {
+      overlay.classList.add('ativo');
+      video.currentTime = 0;
+      video.play();
+    });
+
+    overlay.addEventListener('click', function() {
+      overlay.classList.remove('ativo');
+      video.pause();
+    });
+
+    video.addEventListener('ended', function() {
+      overlay.classList.remove('ativo');
+    });
+  }
+
+  criarVideoElemento('bolha-link', 'bolha-video-overlay', 'bolha-video');
+  criarVideoElemento('relogio-link', 'relogio-video-overlay', 'relogio-video');
+
+  // Galeria em carrossel vertical com scroll infinito — usada pelos diamantes e pelo quadrado verde.
+  function criarGaleria(linkId, overlayId, trackId, closeId, counterId, imagens) {
+    var link = document.getElementById(linkId);
+    var overlay = document.getElementById(overlayId);
+    var track = document.getElementById(trackId);
+    var counter = document.getElementById(counterId);
+    var total = imagens.length;
+    var slides = [];
+
+    // Scroll infinito: repete as imagens 3 vezes e recentra silenciosamente a
+    // meio quando o utilizador se aproxima do início ou do fim da fita.
+    function construirTrack() {
+      var html = '';
+      for (var copia = 0; copia < 3; copia++) {
+        for (var i = 0; i < total; i++) {
+          html += '<div class="img-gallery-slide"><img src="' + imagens[i] + '" alt=""></div>';
+        }
+      }
+      track.innerHTML = html;
+      slides = Array.prototype.slice.call(track.querySelectorAll('.img-gallery-slide'));
+    }
+    construirTrack();
+
+    function atualizarContador() {
+      var alturaSlide = slides[0].offsetHeight;
+      var centro = track.scrollTop + track.clientHeight / 2;
+      var indiceAbsoluto = Math.floor(centro / alturaSlide);
+      var indice = ((indiceAbsoluto % total) + total) % total;
+      counter.textContent = (indice + 1) + ' / ' + total;
+    }
+
+    var loopTimeout;
+    function ajustarLoop() {
+      var alturaCopia = total * slides[0].offsetHeight;
+      if (track.scrollTop < alturaCopia) {
+        track.scrollTop += alturaCopia;
+      } else if (track.scrollTop >= alturaCopia * 2) {
+        track.scrollTop -= alturaCopia;
+      }
+    }
+
+    track.addEventListener('scroll', function() {
+      atualizarContador();
+      clearTimeout(loopTimeout);
+      loopTimeout = setTimeout(ajustarLoop, 120);
+    }, { passive: true });
+
+    link.addEventListener('click', function() {
+      overlay.classList.add('ativo');
+      track.scrollTop = total * slides[0].offsetHeight;
+      atualizarContador();
+    });
+
+    document.getElementById(closeId).addEventListener('click', function() {
+      overlay.classList.remove('ativo');
+    });
+
+    track.addEventListener('click', function(e) {
+      if (e.target.classList.contains('img-gallery-slide')) {
+        overlay.classList.remove('ativo');
+      }
+    });
+  }
+
+  criarGaleria('diamantes-link', 'diamantes-gallery-overlay', 'diamantes-gallery-track', 'diamantes-gallery-close', 'diamantes-gallery-counter',
+    ['IMG_8552.png', 'IMG_8604.png', 'IMG_8683.png', 'IMG_8747.png', 'IMG_8768.png', 'IMG_8781.png']);
+
+  criarGaleria('quadrado-link', 'quadrado-gallery-overlay', 'quadrado-gallery-track', 'quadrado-gallery-close', 'quadrado-gallery-counter',
+    ['IMG_8496.png', 'IMG_8528.png', 'IMG_8530.png', 'IMG_8532.png']);
+</script>
+</body>
+</html>

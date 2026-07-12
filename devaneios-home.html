@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devaneio</title>
+<script>
+  document.documentElement.style.backgroundColor = '#1b1b1b';
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400&family=Instrument+Serif:wght@400&display=swap" rel="stylesheet">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Instrument sans";
+    background-color: #1b1b1b;
+    overflow: hidden;
+  }
+
+  #clock3d {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.15;
+    pointer-events: none;
+  }
+
+  #clock3d canvas {
+    display: block;
+  }
+
+  .canto {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 30;
+    display: block;
+  }
+
+  .texto {
+    position: relative;
+    z-index: 5;
+    color: #a2a2a2;
+    text-align: center;
+    max-width: 780px;
+    padding: 0 24px;
+    font-family: "Instrument Serif", serif;
+    font-size: 36px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 60px;
+  }
+
+  .continuar {
+    position: relative;
+    z-index: 5;
+    margin-top: 20px;
+    color: #a2a2a2;
+    text-align: center;
+    font-family: "Instrument sans";
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 400;
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+
+  .page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #1b1b1b;
+    clip-path: circle(0% at 50% 100%);
+    pointer-events: none;
+    transition: clip-path 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+  }
+
+  .page-transition-overlay.cobrir {
+    clip-path: circle(150% at 50% 100%);
+  }
+
+  .creditos {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10;
+    max-width: 260px;
+    color: #a2a2a2;
+    text-align: right;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    opacity: 0.5;
+  }
+
+  .creditos a {
+    color: #a2a2a2;
+    text-decoration: underline;
+  }
+</style>
+
+<script src="cursor.js" defer></script>
+</head>
+<body>
+  <div class="page-transition-overlay" id="page-transition"></div>
+  <script>
+  (function() {
+    var overlay = document.getElementById('page-transition');
+    if (!overlay) return;
+
+    if (sessionStorage.getItem('pageTransition') === '1') {
+      sessionStorage.removeItem('pageTransition');
+      overlay.style.transition = 'none';
+      overlay.classList.add('cobrir');
+      overlay.offsetHeight;
+      overlay.style.transition = '';
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          overlay.classList.remove('cobrir');
+        });
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('a.canto').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          var url = link.getAttribute('href');
+          sessionStorage.setItem('pageTransition', '1');
+          overlay.classList.add('cobrir');
+          setTimeout(function() { window.location.href = url; }, 900);
+        });
+      });
+    });
+  })();
+  </script>
+
+  <div id="clock3d"></div>
+
+  <p class="creditos">3D feito com Blender e animado </br> com three.js, com auxílio de IA.</p>
+
+  <a href="home.html" class="canto">
+    <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" fill="none">
+      <circle cx="22.5" cy="22.5" r="22.5" fill="white"/>
+      <path d="M23.2788 13H29L20.7212 23L29 33H23.2788L15 23L23.2788 13Z" fill="#1B1B1B"/>
+    </svg>
+  </a>
+
+  <div id="area-central" style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+    <p id="texto-principal" class="texto">
+      O relógio é o símbolo dessa mudança. </br> É a prova de que o agora é só uma ideia.
+    </p>
+
+    <p id="continuar" class="continuar">clique para continuar</p>
+  </div>
+
+<script>
+  var textos = [
+    'O relógio é o símbolo dessa mudança. É a prova de que o agora é só uma ideia.',
+    'É o reflexo de uma modernidade que colocou o tempo em posição de deus — esse intervalo que chamamos de segundos e minutos, que dividimos e medimos como se fosse nosso.',
+    'Tentamos entender para onde vai o rio olhando<br>para uma bolha com data e hora.'
+  ];
+  var textoIdx = 0;
+
+  setTimeout(function() {
+    var continuar = document.getElementById('continuar');
+    if (continuar) continuar.style.opacity = '1';
+  }, 2000);
+
+  document.getElementById('area-central').addEventListener('click', function() {
+    if (textoIdx >= textos.length - 1) return;
+    textoIdx++;
+
+    var textoPrincipal = document.getElementById('texto-principal');
+    var continuar = document.getElementById('continuar');
+    if (textoPrincipal) {
+      textoPrincipal.innerHTML = textos[textoIdx];
+    }
+    if (textoIdx === textos.length - 1 && continuar) {
+      continuar.style.opacity = '0';
+    }
+  });
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 100);
+camera.position.set(0, 0, 5);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+document.getElementById('clock3d').appendChild(renderer.domElement);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambient);
+
+const key = new THREE.DirectionalLight(0xffffff, 1.8);
+key.position.set(3, 5, 4);
+scene.add(key);
+
+const fill = new THREE.DirectionalLight(0xffffff, 0.6);
+fill.position.set(-4, 2, 3);
+scene.add(fill);
+
+const loader = new GLTFLoader();
+let clock3D = null;
+
+const SECTION_NAMES = {
+  hour: ['hour', 'Hour', 'Horas', 'ponteiro_horas', 'Ponteiro_horas', 'hand_hour', 'HourHand'],
+  minute: ['minute', 'Minute', 'Minutos', 'ponteiro_minutos', 'Ponteiro_minutos', 'hand_minute', 'MinuteHand'],
+  second: ['second', 'Second', 'Segundos', 'ponteiro_segundos', 'Ponteiro_segundos', 'hand_second', 'SecondHand'],
+  gearBig: ['engrenagem_grande', 'Engrenagem_grande', 'EngrenagemGrande', 'gear_big', 'GearBig', 'gear_large', 'GearLarge'],
+  gearSmall: ['engrenagem_pequena', 'Engrenagem_pequena', 'EngrenagemPequena', 'gear_small', 'GearSmall'],
+};
+
+let hourHand = null;
+let minuteHand = null;
+let secondHand = null;
+let gearBig = null;
+let gearSmall = null;
+
+function matchSection(name) {
+  for (const [key, aliases] of Object.entries(SECTION_NAMES)) {
+    if (aliases.some(a => name.toLowerCase().includes(a.toLowerCase()))) return key;
+  }
+  return null;
+}
+
+function cleanMetalMaterial() {
+  return new THREE.MeshStandardMaterial({
+    color: 0xd6d6d6,
+    metalness: 1,
+    roughness: 0.35,
+    envMapIntensity: 1,
+  });
+}
+
+let baseScale = null;
+
+loader.load('Relogio fbaup.glb', gltf => {
+  clock3D = gltf.scene;
+
+  const box = new THREE.Box3().setFromObject(clock3D);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const scale = 2.8 / maxDim;
+
+  clock3D.position.sub(center.multiplyScalar(scale));
+  clock3D.scale.setScalar(scale);
+
+  clock3D.traverse(obj => {
+    if (!obj.isMesh) return;
+    const cleanMat = cleanMetalMaterial(obj.material);
+    obj.material = cleanMat;
+
+    const section = matchSection(obj.name);
+    if (section === 'hour') hourHand = obj;
+    else if (section === 'minute') minuteHand = obj;
+    else if (section === 'second') secondHand = obj;
+    else if (section === 'gearBig') gearBig = obj;
+    else if (section === 'gearSmall') gearSmall = obj;
+  });
+
+  scene.add(clock3D);
+  baseScale = clock3D.scale.x;
+  clock3D.scale.setScalar(baseScale * scaleFactor());
+}, undefined, err => {
+  console.error('Erro a carregar GLB:', err);
+});
+
+function updateClock() {
+  const now = new Date();
+  const h = now.getHours();
+  const m = now.getMinutes();
+  const s = now.getSeconds();
+
+  const degH = (h % 12 + m / 60) * 30;
+  const degM = (m + s / 60) * 6;
+  const degS = s * 6;
+
+  const toRad = d => d * Math.PI / 180;
+
+  if (hourHand) hourHand.rotation.y = -toRad(degH);
+  if (minuteHand) minuteHand.rotation.y = -toRad(degM);
+  if (secondHand) secondHand.rotation.y = -toRad(degS);
+}
+
+setInterval(updateClock, 50);
+
+const baseRotX = Math.PI / 2;
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  if (clock3D) {
+    clock3D.rotation.x = baseRotX;
+  }
+
+  if (gearBig) gearBig.rotation.y = t * 0.06;
+  if (gearSmall) gearSmall.rotation.y = t * 0.236;
+
+  renderer.render(scene, camera);
+}
+
+animate();
+updateClock();
+
+function scaleFactor() {
+  if (innerWidth >= 1200) return 1.0;
+  if (innerWidth >= 900)  return 0.78;
+  if (innerWidth >= 600)  return 0.58;
+  return 0.58;
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  if (clock3D && baseScale !== null) {
+    clock3D.scale.setScalar(baseScale * scaleFactor());
+  }
+});
+</script>
+</body>
+</html>

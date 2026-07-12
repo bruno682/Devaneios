@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ovar</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.typekit.net/sbt4grx.css">
+    <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    .page-header {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+        display: flex; align-items: flex-start; justify-content: space-between;
+        padding: 20px; pointer-events: none;
+    }
+    .page-header a { pointer-events: auto; }
+    .page-titulo { text-align: center; }
+    .page-titulo h1 { margin: 0; color: #ffffff; font-family: "Instrument Sans", sans-serif; font-size: 37px; font-weight: 700; line-height: normal; transition: color 0.4s ease; }
+    .page-titulo h1 a { color: inherit; text-decoration: none; }
+    .page-titulo p { margin: 0; color: rgba(255, 255, 255, 0.75); font-family: "Instrument Sans", sans-serif; font-size: 14px; font-weight: 600; line-height: normal; text-transform: uppercase; transition: color 0.4s ease; }
+    .page-transition-overlay { position: fixed; inset: 0; z-index: 99999; background: #1b1b1b; clip-path: circle(0% at 50% 100%); pointer-events: none; transition: clip-path 0.9s cubic-bezier(0.76, 0, 0.24, 1); }
+    .page-transition-overlay.cobrir { clip-path: circle(150% at 50% 100%); }
+
+    /* ── HEADER MUDA DE COR AO SAIR DA HERO ESCURA ── */
+    .btn-back svg circle, .btn-back svg path,
+    .btn-right svg circle, .btn-right svg rect { transition: fill 0.4s ease; }
+    .header-scrolled .page-titulo h1 { color: #1B1B1B; }
+    .header-scrolled .page-titulo p { color: rgba(27,27,27,0.6); }
+    .header-scrolled .btn-back svg circle { fill: #1B1B1B; }
+    .header-scrolled .btn-back svg path  { fill: #ffffff; }
+    .header-scrolled .btn-right svg circle { fill: #1B1B1B; }
+    .header-scrolled .btn-right svg rect   { fill: #ffffff; }
+
+    .ovar-eyebrow {
+        margin: 0;
+        color: #9F9F9F;
+        font-family: "Instrument Sans", sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .ovar-heading {
+        margin: 0;
+        max-width: 720px;
+        color: #1B1B1B;
+        font-family: "Instrument Sans", sans-serif;
+        font-size: clamp(1.6rem, 3.4vw, 2.8rem);
+        font-weight: 700;
+        line-height: 1.3;
+    }
+    .ovar-back {
+        margin-top: 12px;
+        color: #1B1B1B;
+        font-family: "Instrument Sans", sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        text-decoration: none;
+        border-bottom: 1px solid #1B1B1B;
+        padding-bottom: 2px;
+    }
+
+    /* ── SECÇÃO SURGE (CAO) — fundo branco, imagem grande à esquerda, texto à direita, entra/sai como scroll normal entre a demolição e o poster ── */
+    .ovar-surge-section {
+        position: fixed;
+        inset: 0;
+        z-index: 6;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8%;
+        padding: 0 8%;
+        flex-wrap: wrap;
+        opacity: 1;
+        pointer-events: none;
+        transform: translateY(100%);
+    }
+    .ovar-surge-image {
+        flex: 1.4 1 480px;
+        max-width: 640px;
+    }
+    .ovar-surge-image img {
+        display: block;
+        width: 100%;
+        height: auto;
+        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.18);
+    }
+    .ovar-surge-text-wrap {
+        flex: 1 1 320px;
+        max-width: 420px;
+    }
+    .ovar-surge-text {
+        margin: 0;
+        color: #1B1B1B;
+        font-family: "Instrument Sans", sans-serif;
+        font-weight: 700;
+        font-size: clamp(1rem, 2vw, 1.8rem);
+        line-height: 1.4;
+    }
+    @media (max-width: 900px) {
+        .ovar-surge-section { flex-direction: column; flex-wrap: nowrap; padding: 90px 8% 0; gap: 32px; }
+        .ovar-surge-text-wrap { text-align: center; max-width: 560px; }
+    }
+
+    /* ── SECÇÃO DO POSTER — fundo branco, texto à esquerda, poster à direita, fixa durante a sua sequência de scroll ── */
+    .ovar-poster-section {
+        position: fixed;
+        inset: 0;
+        z-index: 30;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8%;
+        padding: 0 8%;
+        flex-wrap: wrap;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .ovar-poster-text-wrap {
+        position: relative;
+        flex: 1 1 420px;
+        max-width: 540px;
+    }
+    .ovar-poster-text-variant {
+        margin: 0;
+        transition: opacity 0.6s ease;
+    }
+    #poster-video {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        transform: translateY(-50%);
+        object-fit: contain;
+        display: block;
+        opacity: 0;
+        transition: opacity 0.8s ease;
+    }
+    .ovar-poster-heading {
+        margin: 0 0 24px;
+        color: #1B1B1B;
+        font-family: "Instrument Sans", sans-serif;
+        font-weight: 700;
+        font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+        line-height: 1.3;
+    }
+    .ovar-poster-subtitle {
+        margin: 0;
+        color: #6B6B6B;
+        font-family: "Instrument Sans", sans-serif;
+        font-weight: 500;
+        font-size: clamp(1rem, 1.2vw, 1.15rem);
+        line-height: 1.6;
+    }
+    .ovar-poster-image {
+        position: relative;
+        flex: 0 1 380px;
+        display: flex;
+        justify-content: center;
+    }
+    .ovar-poster-image img {
+        display: block;
+        width: 100%;
+        max-width: 380px;
+        height: auto;
+        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.18);
+    }
+    .ovar-poster-bar {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        max-width: 380px;
+        background: #1B1B1B;
+        opacity: 0;
+        transition: opacity 0.8s ease, top 0.8s ease;
+    }
+    .ovar-poster-bar-top { top: 19%; height: 1.5%; }
+    .ovar-poster-bar-bottom { top: 87.7%; height: 1.5%; }
+    .ovar-poster-color-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        max-width: 380px;
+        height: 100%;
+        background: #F84248;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.8s ease;
+    }
+    .ovar-poster-cartaz {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        max-width: 380px;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.18);
+        transition: opacity 0.8s ease;
+    }
+    /* Espaço de scroll para permitir avançar para a secção seguinte; a animação do poster já não depende do scroll */
+    #poster-scroll-spacer {
+        height: 150vh;
+    }
+    @media (max-width: 900px) {
+        .ovar-poster-section { flex-direction: row; flex-wrap: nowrap; align-items: center; justify-content: center; padding: 0 6%; gap: 6vw; }
+        .ovar-poster-text-wrap { text-align: left; flex: 0 0 auto; width: min(320px, 42vw); max-width: none; }
+        .ovar-poster-heading { font-size: clamp(1rem, 3.6vw, 1.5rem); margin-bottom: 10px; }
+        .ovar-poster-subtitle { font-size: clamp(0.72rem, 2vw, 0.9rem); }
+        .ovar-poster-image { flex: 0 0 auto; width: min(200px, 32vw); max-width: none; }
+    }
+    @media (max-width: 600px) {
+        .ovar-poster-text-wrap { width: min(220px, 46vw); }
+        .ovar-poster-image { width: min(150px, 34vw); }
+    }
+
+    /* ── VÍDEO FINAL — conteúdo normal, sem fixação ── */
+    .ovar-video2-section {
+        position: relative;
+        z-index: 40;
+        background: #ffffff;
+        padding: 100px 8%;
+        display: flex;
+        justify-content: center;
+    }
+    .ovar-video2 {
+        display: block;
+        width: 100%;
+        max-width: 900px;
+        height: auto;
+    }
+
+    /* ── INSTA OVAR — conteúdo normal, sem fixação ── */
+    .ovar-insta-section {
+        position: relative;
+        z-index: 40;
+        background: #43A1FF;
+        padding: 40px 4%;
+        display: flex;
+        justify-content: center;
+    }
+    .ovar-insta-img {
+        display: block;
+        width: 100%;
+        max-width: 1800px;
+        height: auto;
+    }
+
+    /* ── GALERIA DE MERCHANDISING/MATERIAIS — grelha em fundo branco ── */
+    .ovar-gallery-section {
+        position: relative;
+        z-index: 40;
+        background: #ffffff;
+        padding: 100px 8%;
+        display: grid;
+        grid-template-columns: 1.6fr 0.7fr 1fr;
+        grid-template-rows: auto auto;
+        gap: 24px;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+    .ovar-gallery-section img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .ovar-gallery-billboard { grid-column: 1; grid-row: 1; }
+    .ovar-gallery-capa      { grid-column: 2; grid-row: 1; }
+    .ovar-gallery-agenda2   { grid-column: 3; grid-row: 1; }
+    .ovar-gallery-camisa    { grid-column: 1; grid-row: 2; }
+    .ovar-gallery-section img.ovar-gallery-camisa { object-fit: contain; }
+    .ovar-gallery-caderno   { grid-column: 2 / 4; grid-row: 2; }
+
+    @media (max-width: 900px) {
+        .ovar-gallery-section {
+            grid-template-columns: 1fr 1fr;
+            padding: 60px 6%;
+            gap: 16px;
+        }
+        .ovar-gallery-billboard { grid-column: 1 / 3; grid-row: 1; }
+        .ovar-gallery-capa      { grid-column: 1; grid-row: 2; }
+        .ovar-gallery-agenda2   { grid-column: 2; grid-row: 2; }
+        .ovar-gallery-camisa    { grid-column: 1 / 3; grid-row: 3; }
+        .ovar-gallery-caderno   { grid-column: 1 / 3; grid-row: 4; }
+    }
+
+    /* ── FECHO — créditos do projeto + voltar a projetos ── */
+    .ovar-closing-section {
+        position: relative;
+        z-index: 40;
+        background: #ffffff;
+        padding: 140px 8%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 40px;
+        text-align: center;
+    }
+    .ovar-closing-credit {
+        margin: 0;
+        max-width: 640px;
+        color: #6B6B6B;
+        font-family: "Instrument Sans", sans-serif;
+        font-weight: 500;
+        font-size: clamp(1rem, 1.4vw, 1.2rem);
+        line-height: 1.6;
+    }
+    .ovar-closing-back {
+        color: #1B1B1B;
+        font-family: "Instrument Sans", sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        text-decoration: none;
+        border-bottom: 1px solid #1B1B1B;
+        padding-bottom: 2px;
+    }
+
+    /* ── INTRO / DECAY / COLLAPSE / CAMARA / DEMOLICAO — imagens em ecrã inteiro, fixas e empilhadas ── */
+    #ovar-intro, #ovar-decay, #ovar-collapse, #ovar-camara, #ovar-demolicao {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+    }
+    #ovar-intro { z-index: 25; }
+    #ovar-decay { z-index: 20; }
+    #ovar-collapse { z-index: 15; }
+    #ovar-camara { z-index: 10; }
+    #ovar-demolicao { z-index: 5; background: #1B1B1B; }
+    #ovar-decay img,
+    #ovar-decay .ovar-intro-overlay,
+    #ovar-decay .ovar-intro-text,
+    #ovar-collapse img,
+    #ovar-collapse .ovar-intro-overlay,
+    #ovar-collapse .ovar-intro-text,
+    #ovar-camara img,
+    #ovar-camara .ovar-intro-overlay,
+    #ovar-camara .ovar-intro-text,
+    #ovar-demolicao img,
+    #ovar-demolicao .ovar-intro-overlay,
+    #ovar-demolicao .ovar-intro-text {
+        opacity: 0;
+    }
+    /* Espaço de scroll que dá tempo à sequência de fades antes do conteúdo normal cobrir o herói fixo */
+    #hero-scroll-spacer {
+        height: 1870vh;
+    }
+    #ovar-intro img, #ovar-decay img, #ovar-collapse img, #ovar-camara img, #ovar-demolicao img {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    #ovar-intro .ovar-intro-overlay, #ovar-decay .ovar-intro-overlay, #ovar-collapse .ovar-intro-overlay, #ovar-camara .ovar-intro-overlay, #ovar-demolicao .ovar-intro-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.75) 100%);
+    }
+    #ovar-intro .ovar-intro-text, #ovar-decay .ovar-intro-text, #ovar-collapse .ovar-intro-text, #ovar-camara .ovar-intro-text, #ovar-demolicao .ovar-intro-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 620px;
+        max-width: 92vw;
+    }
+    #ovar-intro .ovar-intro-top, #ovar-decay .ovar-intro-top, #ovar-collapse .ovar-intro-top, #ovar-camara .ovar-intro-top, #ovar-demolicao .ovar-intro-top {
+        display: flex;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 24px;
+        margin-bottom: 16px;
+    }
+    #ovar-intro .ovar-intro-year, #ovar-decay .ovar-intro-year, #ovar-collapse .ovar-intro-year, #ovar-camara .ovar-intro-year, #ovar-demolicao .ovar-intro-year {
+        margin: 0;
+        color: #ffffff;
+        font-family: "Instrument Sans", sans-serif;
+        font-weight: 700;
+        font-size: clamp(2.8rem, 7vw, 5.5rem);
+        line-height: 1;
+    }
+    #ovar-intro h1, #ovar-decay h1, #ovar-collapse h1, #ovar-camara h1, #ovar-demolicao h1 {
+        margin: 0;
+        color: #ffffff;
+        font-family: "Instrument Sans", sans-serif;
+        font-weight: 700;
+        font-style: normal;
+        font-size: clamp(1.4rem, 2.8vw, 2.3rem);
+        line-height: 1.2;
+        max-width: 480px;
+    }
+    /* Demolição — citação isolada, sem ano, que surge depois do texto de 2024, centrada no meio do ecrã */
+    #ovar-demolicao .ovar-quote-text h1 {
+        text-align: center;
+        margin: 0 auto;
+        max-width: 600px;
+    }
+    #ovar-intro p, #ovar-decay p, #ovar-collapse p, #ovar-camara p, #ovar-demolicao p {
+        margin: 0;
+        max-width: 560px;
+        color: rgba(255, 255, 255, 0.8);
+        font-family: "Instrument Sans", sans-serif;
+        font-weight: 600;
+        font-size: clamp(0.9rem, 1.05vw, 1rem);
+        line-height: 1.5;
+    }
+
+    /* ── ROLE PARA BAIXO ── */
+    .role-baixo {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 30;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        pointer-events: none;
+    }
+    .role-baixo p {
+        margin: 0;
+        color: #BBBBBB;
+        font-family: "Instrument Sans", sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    @media (max-width: 900px) {
+        .page-titulo h1 { font-size: clamp(18px, 3vw, 37px); }
+    }
+    @media (max-width: 700px) {
+        #ovar-intro .ovar-intro-text, #ovar-decay .ovar-intro-text, #ovar-collapse .ovar-intro-text, #ovar-camara .ovar-intro-text, #ovar-demolicao .ovar-intro-text { width: 96vw; max-width: 96vw; }
+        #ovar-intro .ovar-intro-top, #ovar-decay .ovar-intro-top, #ovar-collapse .ovar-intro-top, #ovar-camara .ovar-intro-top, #ovar-demolicao .ovar-intro-top { width: fit-content; margin: 0 auto 12px; gap: 12px; }
+        #ovar-intro .ovar-intro-year, #ovar-decay .ovar-intro-year, #ovar-collapse .ovar-intro-year, #ovar-camara .ovar-intro-year, #ovar-demolicao .ovar-intro-year { font-size: clamp(1.8rem, 9vw, 2.6rem); }
+        #ovar-intro h1, #ovar-decay h1, #ovar-collapse h1, #ovar-camara h1, #ovar-demolicao h1 { font-size: clamp(0.95rem, 4.4vw, 1.5rem); max-width: none; }
+        #ovar-intro p, #ovar-decay p, #ovar-collapse p, #ovar-camara p, #ovar-demolicao p { width: fit-content; margin: 0 auto; font-size: clamp(0.38rem, 2.05vw, 1rem); max-width: none; }
+        .role-baixo p { font-size: 9px; }
+        .role-baixo svg { width: 14px; height: 6px; }
+        .role-baixo { gap: 5px; bottom: 16px; }
+    }
+    @media (max-width: 600px) {
+        .page-titulo h1 { font-size: 18px; }
+    }
+    </style>
+<script src="cursor.js" defer></script>
+</head>
+<body style="background-color: #ffffff; margin: 0;">
+  <div class="page-transition-overlay" id="page-transition"></div>
+  <script>
+  (function() {
+    var overlay = document.getElementById('page-transition');
+    if (!overlay) return;
+    if (sessionStorage.getItem('pageTransition') === '1') {
+      sessionStorage.removeItem('pageTransition');
+      overlay.style.transition = 'none';
+      overlay.classList.add('cobrir');
+      overlay.offsetHeight;
+      overlay.style.transition = '';
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { overlay.classList.remove('cobrir'); });
+      });
+    }
+    window.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('a.page-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          var url = link.getAttribute('href');
+          sessionStorage.setItem('pageTransition', '1');
+          overlay.classList.add('cobrir');
+          setTimeout(function() { window.location.href = url; }, 900);
+        });
+      });
+    });
+  })();
+  </script>
+
+  <header class="page-header">
+    <a href="projects.html" class="page-link btn-back">
+      <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" fill="none">
+        <circle cx="22.5" cy="22.5" r="22.5" fill="#ffffff"/>
+        <path d="M23.2788 13H29L20.7212 23L29 33H23.2788L15 23L23.2788 13Z" fill="#1B1B1B"/>
+      </svg>
+    </a>
+    <div class="page-titulo">
+      <h1><a href="index.html" class="page-link">BRUNO EID</a></h1>
+      <p>Ovar</p>
+    </div>
+    <a href="devaneios-ovar.html" class="page-link btn-right">
+      <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <circle cx="22.5" cy="37.5" r="22.5" fill="#ffffff"/>
+        <circle cx="37.5" cy="22.5" r="22.5" fill="#ffffff"/>
+        <rect x="25" y="25" width="10" height="10" fill="#1B1B1B"/>
+      </svg>
+    </a>
+  </header>
+
+    <!-- Intro — imagem do Cine-Teatro em ecrã inteiro -->
+    <div id="ovar-intro">
+        <img src="Imagem 1 ovar.png" alt="Cine-Teatro de Ovar">
+        <div class="ovar-intro-overlay"></div>
+        <div class="ovar-intro-text">
+            <div class="ovar-intro-top">
+                <p class="ovar-intro-year">1944</p>
+                <h1>Ovar inaugura<br>o seu Cine-Teatro.</h1>
+            </div>
+            <p>Mil lugares. Um salão de festas. Um palco para uma cidade inteira.<br>Durante meio século, foi aqui que Ovar se viu ao espelho.</p>
+        </div>
+
+        <div class="role-baixo" id="role-baixo">
+            <p>role para baixo</p>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="8" viewBox="0 0 20 8" fill="none">
+                <path d="M-1.43324e-07 3.72113L-3.49692e-07 -2.38419e-05L10 4.27885L20 -2.47161e-05L20 3.72113L10 8L-1.43324e-07 3.72113Z" fill="#BBBBBB"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Decadência — imagem em ecrã inteiro, atrás da intro, fade-in com o scroll -->
+    <div id="ovar-decay">
+        <img src="Ovar 2.png" alt="Cine-Teatro de Ovar fechado">
+        <div class="ovar-intro-overlay"></div>
+        <div class="ovar-intro-text">
+            <div class="ovar-intro-top">
+                <p class="ovar-intro-year">1990</p>
+                <h1>As portas fecham.</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- Colapso — imagem em ecrã inteiro, atrás da decadência, fade-in com o scroll -->
+    <div id="ovar-collapse">
+        <img src="Ovar 3.png" alt="Cine-Teatro de Ovar em ruína">
+        <div class="ovar-intro-overlay"></div>
+        <div class="ovar-intro-text">
+            <div class="ovar-intro-top">
+                <p class="ovar-intro-year">2016</p>
+                <h1>A fachada rui.<br>O edifício é amputado.</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- Câmara — imagem em ecrã inteiro, atrás do colapso, fade-in com o scroll -->
+    <div id="ovar-camara">
+        <img src="Ovar 4.png" alt="Cine-Teatro de Ovar comprado pela Câmara">
+        <div class="ovar-intro-overlay"></div>
+        <div class="ovar-intro-text">
+            <div class="ovar-intro-top">
+                <p class="ovar-intro-year">2018</p>
+                <h1>A Câmara compra a ruína.<br>Promete devolvê-la à cidade.</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demolição — imagem em ecrã inteiro, atrás da câmara, fade-in com o scroll -->
+    <div id="ovar-demolicao">
+        <img src="Ovar 5.png" alt="Demolição do Cine-Teatro de Ovar">
+        <div class="ovar-intro-overlay"></div>
+        <div class="ovar-intro-text" id="demolicao-text">
+            <div class="ovar-intro-top">
+                <p class="ovar-intro-year">2024</p>
+                <h1>A promessa muda de nome.<br>Agora chama-se demolição.</h1>
+            </div>
+        </div>
+        <div class="ovar-intro-text ovar-quote-text" id="demolicao-quote">
+            <h1>A população não aceitou que a memória fosse tratada como entulho.</h1>
+        </div>
+    </div>
+
+    <!-- Secção surge (CAO) — fundo branco, imagem grande à esquerda, texto à direita, entra depois da demolição e antes do poster -->
+    <section class="ovar-surge-section" id="ovar-surge-section">
+        <div class="ovar-surge-image">
+            <img src="Ovar inicio.png" alt="Fachada do Cine-Teatro de Ovar">
+        </div>
+        <div class="ovar-surge-text-wrap">
+            <p class="ovar-surge-text">O CAO surge da união da população contra o descaso e preservação de edifícios históricos na cidade de Ovar.</p>
+        </div>
+    </section>
+
+    <!-- Espaço de scroll para a sequência de fades do herói fixo acima -->
+    <div id="hero-scroll-spacer"></div>
+
+    <!-- Secção do poster — fundo branco, texto à esquerda, poster à direita, fixa durante a sua sequência de scroll -->
+    <section class="ovar-poster-section" id="ovar-poster-section">
+        <div class="ovar-poster-text-wrap">
+            <div class="ovar-poster-text-variant" id="poster-text-1">
+                <h2 class="ovar-poster-heading">Um edifício pode cair. O que ele guardou, não.</h2>
+                <p class="ovar-poster-subtitle">Estes papéis sobreviveram ao edifício. Revivendo a memória do Teatro.</p>
+            </div>
+            <video id="poster-video" src="Ovar logo animad.mp4" muted playsinline preload="auto"></video>
+        </div>
+        <div class="ovar-poster-image">
+            <img src="Poster Ovar.png" alt="Poster do Cine-Teatro de Ovar">
+            <div class="ovar-poster-color-overlay" id="poster-color-overlay"></div>
+            <div class="ovar-poster-bar ovar-poster-bar-top" id="poster-bar-top"></div>
+            <div class="ovar-poster-bar ovar-poster-bar-bottom" id="poster-bar-bottom"></div>
+            <img class="ovar-poster-cartaz" id="poster-cartaz" src="cartaz malvados.png" alt="Cartaz Império dos Malvados — CAO">
+        </div>
+    </section>
+
+    <!-- Espaço de scroll para a sequência de texto/retângulos do poster acima -->
+    <div id="poster-scroll-spacer"></div>
+
+    <!-- Vídeo final — conteúdo normal, sem fixação, aparece com o scroll normal da página -->
+    <section class="ovar-video2-section">
+        <video class="ovar-video2" src="Ovar video2.mp4" autoplay muted loop playsinline></video>
+    </section>
+
+    <!-- Insta Ovar — conteúdo normal, sem fixação, aparece com o scroll normal da página -->
+    <section class="ovar-insta-section">
+        <img class="ovar-insta-img" src="Insta ovar.png" alt="Publicações de Instagram do CAAO">
+    </section>
+
+    <section class="ovar-gallery-section">
+        <img class="ovar-gallery-billboard" src="billboard ovar.png" alt="Billboard CAAO">
+        <img class="ovar-gallery-capa" src="CAPA MOCKUP AGENDA.png" alt="Capa da agenda CAAO">
+        <img class="ovar-gallery-agenda2" src="agenda2 ovar.png" alt="Página interior da agenda CAAO">
+        <img class="ovar-gallery-camisa" src="Camisa ovar.png" alt="T-shirt CAAO">
+        <img class="ovar-gallery-caderno" src="Caderno ovar.png" alt="Cadernos CAAO">
+    </section>
+
+    <section class="ovar-closing-section">
+        <p class="ovar-closing-credit">Identidade criada para um teatro na cadeira de Design Estratégico na Universidade de Aveiro.</p>
+        <a href="projects.html" class="page-link ovar-closing-back">Voltar a projectos.</a>
+    </section>
+
+    <script>
+        (function() {
+            var introEl = document.getElementById('ovar-intro');
+            var introText = introEl.querySelector('.ovar-intro-text');
+            var introImg = introEl.querySelector('img');
+            var introOverlay = introEl.querySelector('.ovar-intro-overlay');
+            var roleBaixo = document.getElementById('role-baixo');
+
+            var decayEl = document.getElementById('ovar-decay');
+            var decayImg = decayEl.querySelector('img');
+            var decayOverlay = decayEl.querySelector('.ovar-intro-overlay');
+            var decayText = decayEl.querySelector('.ovar-intro-text');
+
+            var collapseEl = document.getElementById('ovar-collapse');
+            var collapseImg = collapseEl.querySelector('img');
+            var collapseOverlay = collapseEl.querySelector('.ovar-intro-overlay');
+            var collapseText = collapseEl.querySelector('.ovar-intro-text');
+
+            var camaraEl = document.getElementById('ovar-camara');
+            var camaraImg = camaraEl.querySelector('img');
+            var camaraOverlay = camaraEl.querySelector('.ovar-intro-overlay');
+            var camaraText = camaraEl.querySelector('.ovar-intro-text');
+
+            var demolicaoEl = document.getElementById('ovar-demolicao');
+            var demolicaoImg = demolicaoEl.querySelector('img');
+            var demolicaoOverlay = demolicaoEl.querySelector('.ovar-intro-overlay');
+            var demolicaoText = document.getElementById('demolicao-text');
+            var demolicaoQuote = document.getElementById('demolicao-quote');
+
+            var pageHeader = document.querySelector('.page-header');
+            var heroSpacer = document.getElementById('hero-scroll-spacer');
+
+            var surgeSection = document.getElementById('ovar-surge-section');
+
+            var posterSection = document.getElementById('ovar-poster-section');
+            var posterText1 = document.getElementById('poster-text-1');
+            var posterVideo = document.getElementById('poster-video');
+            var posterImg = document.querySelector('.ovar-poster-image img');
+            var posterBarTop = document.getElementById('poster-bar-top');
+            var posterBarBottom = document.getElementById('poster-bar-bottom');
+            var posterColorOverlay = document.getElementById('poster-color-overlay');
+            var posterCartaz = document.getElementById('poster-cartaz');
+
+            // Iguala a altura do vídeo à altura real do poster, para ficarem alinhados
+            function syncVideoHeight() {
+                var h = posterImg.getBoundingClientRect().height;
+                if (h > 0) posterVideo.style.height = h + 'px';
+            }
+            window.addEventListener('resize', syncVideoHeight);
+            window.addEventListener('load', syncVideoHeight);
+            syncVideoHeight();
+
+            var BAR_TOP_END = 8.8;
+            var BAR_BOTTOM_END = 91.4;
+
+            // Bloqueia o scroll enquanto o vídeo do poster está a tocar
+            var scrollLockY = 0;
+            function lockScroll() {
+                scrollLockY = window.scrollY;
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+            }
+            function unlockScroll() {
+                document.documentElement.style.overflow = '';
+                document.body.style.overflow = '';
+                window.scrollTo(0, scrollLockY);
+            }
+            posterVideo.addEventListener('play', lockScroll);
+            posterVideo.addEventListener('ended', unlockScroll);
+            posterVideo.addEventListener('pause', function() {
+                if (posterVideo.ended) return;
+                unlockScroll();
+            });
+
+            // A animação sobre o poster (texto, barras, cor, vídeo, cartaz) toca automaticamente
+            // uma única vez, assim que a secção do poster fica totalmente visível — já não depende do scroll.
+            var posterSequenceStarted = false;
+            function playPosterSequence() {
+                setTimeout(function() { posterText1.style.opacity = '0'; }, 0);
+
+                setTimeout(function() {
+                    posterBarTop.style.opacity = '1';
+                    posterBarBottom.style.opacity = '1';
+                    posterVideo.style.opacity = '1';
+                    posterVideo.playbackRate = 3;
+                    posterVideo.play();
+                }, 700);
+
+                setTimeout(function() {
+                    posterColorOverlay.style.opacity = '1';
+                }, 1600);
+
+                setTimeout(function() {
+                    posterBarTop.style.top = BAR_TOP_END + '%';
+                    posterBarBottom.style.top = BAR_BOTTOM_END + '%';
+                }, 3200);
+
+                setTimeout(function() {
+                    posterCartaz.style.opacity = '1';
+                }, 4200);
+            }
+
+            function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+            // Fases definidas em múltiplos da altura da janela (vh), para um ritmo estável
+            // independente da altura total do espaçador de scroll.
+            function phaseVh(y, startVh, endVh, vh) { return clamp01((y - startVh * vh) / ((endVh - startVh) * vh)); }
+
+            function updateHero() {
+                var vh = window.innerHeight;
+                var y = window.scrollY;
+
+                // Header passa para a versão escura assim que a secção de fundo branco chega ao topo
+                if (pageHeader) {
+                    pageHeader.classList.toggle('header-scrolled', y >= heroSpacer.offsetHeight);
+                }
+
+                // 1) texto da intro desaparece
+                var textOpacity = 1 - phaseVh(y, 0, 0.5, vh);
+                introText.style.opacity = textOpacity;
+                if (roleBaixo) roleBaixo.style.opacity = textOpacity;
+
+                // 2) imagem da intro desaparece, revelando a decadência
+                var introImgOpacity = 1 - phaseVh(y, 0.6, 1.3, vh);
+                introImg.style.opacity = introImgOpacity;
+                introOverlay.style.opacity = introImgOpacity;
+                introEl.style.pointerEvents = y >= 1.3 * vh ? 'none' : 'auto';
+
+                // 3) imagem da decadência aparece, depois desaparece revelando o colapso
+                var decayImgIn = phaseVh(y, 1.1, 1.8, vh);
+                var decayImgOut = phaseVh(y, 4.2, 4.9, vh);
+                var decayImgOpacity = decayImgIn * (1 - decayImgOut);
+                decayImg.style.opacity = decayImgOpacity;
+                decayOverlay.style.opacity = decayImgOpacity;
+                decayEl.style.pointerEvents = y >= 4.9 * vh ? 'none' : 'auto';
+
+                // 4) ano e texto da decadência aparecem, depois desaparecem
+                var decayTextIn = phaseVh(y, 1.9, 2.4, vh);
+                var decayTextOut = phaseVh(y, 3.6, 4.1, vh);
+                decayText.style.opacity = decayTextIn * (1 - decayTextOut);
+                // 2.4–3.6vh fica em pausa, cena "1990" completa
+
+                // 5) imagem do colapso aparece, depois desaparece revelando a câmara
+                var collapseImgIn = phaseVh(y, 4.7, 5.4, vh);
+                var collapseImgOut = phaseVh(y, 7.8, 8.5, vh);
+                var collapseImgOpacity = collapseImgIn * (1 - collapseImgOut);
+                collapseImg.style.opacity = collapseImgOpacity;
+                collapseOverlay.style.opacity = collapseImgOpacity;
+                collapseEl.style.pointerEvents = y >= 8.5 * vh ? 'none' : 'auto';
+
+                // 6) ano e texto do colapso aparecem, depois desaparecem
+                var collapseTextIn = phaseVh(y, 5.5, 6.0, vh);
+                var collapseTextOut = phaseVh(y, 7.2, 7.7, vh);
+                collapseText.style.opacity = collapseTextIn * (1 - collapseTextOut);
+                // 6.0–7.2vh fica em pausa, cena "2016" completa
+
+                // 7) imagem da câmara aparece, depois desaparece revelando a demolição
+                var camaraImgIn = phaseVh(y, 8.3, 9.0, vh);
+                var camaraImgOut = phaseVh(y, 11.4, 12.1, vh);
+                var camaraImgOpacity = camaraImgIn * (1 - camaraImgOut);
+                camaraImg.style.opacity = camaraImgOpacity;
+                camaraOverlay.style.opacity = camaraImgOpacity;
+                camaraEl.style.pointerEvents = y >= 12.1 * vh ? 'none' : 'auto';
+
+                // 8) ano e texto da câmara aparecem, depois desaparecem
+                var camaraTextIn = phaseVh(y, 9.1, 9.6, vh);
+                var camaraTextOut = phaseVh(y, 10.8, 11.3, vh);
+                camaraText.style.opacity = camaraTextIn * (1 - camaraTextOut);
+                // 9.6–10.8vh fica em pausa, cena "2018" completa
+
+                // 9) imagem da demolição aparece (fica visível até ao fim, não volta a desaparecer)
+                var demolicaoImgOpacity = phaseVh(y, 11.9, 12.6, vh);
+                demolicaoImg.style.opacity = demolicaoImgOpacity;
+                demolicaoOverlay.style.opacity = demolicaoImgOpacity;
+
+                // 10) ano e texto "2024" aparecem, ficam em pausa, depois desaparecem
+                var demolicaoTextIn = phaseVh(y, 12.7, 13.2, vh);
+                var demolicaoTextOut = phaseVh(y, 14.4, 14.9, vh);
+                demolicaoText.style.opacity = demolicaoTextIn * (1 - demolicaoTextOut);
+                // 13.2–14.4vh fica em pausa, cena "2024" completa
+
+                // 11) citação final aparece, depois de o texto "2024" desaparecer
+                demolicaoQuote.style.opacity = phaseVh(y, 15.0, 15.5, vh);
+                // 15.5–15.7vh fica em pausa, citação completa
+
+                // ── Transição final — a demolição sobe e sai como uma página normal, a secção
+                // "surge" (CAO) entra de baixo, fica em pausa, depois sobe e sai da mesma forma,
+                // enquanto a secção do poster entra de baixo para cima, sempre como scroll normal ──
+                var demolicaoToSurge = phaseVh(y, 15.7, 16.7, vh);
+                demolicaoEl.style.transform = 'translateY(' + (-demolicaoToSurge * 100) + '%)';
+                // 16.7–17.7vh fica em pausa, cena "surge" completa
+
+                var surgeToPoster = phaseVh(y, 17.7, 18.7, vh);
+                surgeSection.style.transform = 'translateY(' + ((1 - demolicaoToSurge) * 100 - surgeToPoster * 100) + '%)';
+                surgeSection.style.pointerEvents = (demolicaoToSurge >= 1 && surgeToPoster <= 0) ? 'auto' : 'none';
+
+                posterSection.style.transform = 'translateY(' + ((1 - surgeToPoster) * 100) + '%)';
+                posterSection.style.opacity = '1';
+                posterSection.style.pointerEvents = surgeToPoster >= 1 ? 'auto' : 'none';
+
+                // Assim que a secção do poster fica totalmente visível, dispara a animação
+                // automática (texto, barras, cor, vídeo, cartaz) uma única vez.
+                if (surgeToPoster >= 1 && !posterSequenceStarted) {
+                    posterSequenceStarted = true;
+                    playPosterSequence();
+                }
+            }
+
+            window.addEventListener('scroll', updateHero, { passive: true });
+            window.addEventListener('resize', updateHero);
+            window.addEventListener('load', updateHero);
+            updateHero();
+        })();
+    </script>
+</body>
+</html>

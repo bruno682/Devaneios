@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cor Aleatória</title>
+<script>
+  document.documentElement.style.backgroundColor = '#1b1b1b';
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400&family=Instrument+Serif:wght@400&display=swap" rel="stylesheet">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Instrument sans";
+    background-color: #1b1b1b;
+  }
+
+  .rosto {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.15;
+  }
+
+  .canto {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 30;
+    display: block;
+  }
+
+  .texto {
+    position: relative;
+    z-index: 5;
+    color: #a2a2a2;
+    text-align: center;
+    font-family: "Instrument Serif", serif;
+    font-size: 36px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 60px;
+  }
+
+  .continuar {
+    position: relative;
+    z-index: 5;
+    margin-top: 20px;
+    color: #a2a2a2;
+    text-align: center;
+    font-family: "Instrument sans";
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 400;
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+
+  .page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #1b1b1b;
+    clip-path: circle(0% at 50% 100%);
+    pointer-events: none;
+    transition: clip-path 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+  }
+
+  .page-transition-overlay.cobrir {
+    clip-path: circle(150% at 50% 100%);
+  }
+
+  .creditos {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10;
+    max-width: 260px;
+    color: #a2a2a2;
+    text-align: right;
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    opacity: 0.5;
+  }
+
+  .creditos a {
+    color: #a2a2a2;
+    text-decoration: underline;
+  }
+</style>
+
+<script src="cursor.js" defer></script>
+</head>
+<body>
+  <div class="page-transition-overlay" id="page-transition"></div>
+  <script>
+  (function() {
+    var overlay = document.getElementById('page-transition');
+    if (!overlay) return;
+
+    if (sessionStorage.getItem('pageTransition') === '1') {
+      sessionStorage.removeItem('pageTransition');
+      overlay.style.transition = 'none';
+      overlay.classList.add('cobrir');
+      overlay.offsetHeight;
+      overlay.style.transition = '';
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          overlay.classList.remove('cobrir');
+        });
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('a.canto').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          var url = link.getAttribute('href');
+          sessionStorage.setItem('pageTransition', '1');
+          overlay.classList.add('cobrir');
+          setTimeout(function() { window.location.href = url; }, 900);
+        });
+      });
+    });
+  })();
+  </script>
+
+  <video class="rosto" src="Rosto G7.webm" autoplay muted loop playsinline></video>
+
+  <p class="creditos">Animação criada no TouchDesigner </br> para o portfólio, inspirada no <a href="https://www.youtube.com/watch?v=kNeSa7XivUs&t=348s" target="_blank" rel="noopener">vídeo</a>.</p>
+
+  <a href="index.html" class="canto">
+    <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" fill="none">
+      <circle cx="22.5" cy="22.5" r="22.5" fill="white"/>
+      <path d="M23.2788 13H29L20.7212 23L29 33H23.2788L15 23L23.2788 13Z" fill="#1B1B1B"/>
+    </svg>
+  </a>
+
+  <div id="area-central" style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+    <p id="texto-principal" class="texto">
+      Se você pedisse para seu Eu de 10 <br> anos atrás para fazer seu portfólio,<br>
+      ficaria feliz com o resultado?
+    </p>
+
+    <p id="continuar" class="continuar">clique para continuar</p>
+  </div>
+
+<script>
+  var textos = [
+    'Se você pedisse para seu Eu de 10 anos atrás<br>para fazer seu portfólio,<br>ficaria feliz com o resultado?',
+    'Essa é uma cápsula do tempo.',
+    'Não de quem eu sou,<br>mas de quem eu estou.'
+  ];
+  var textoIdx = 0;
+
+  setTimeout(function() {
+    var continuar = document.getElementById('continuar');
+    if (continuar) continuar.style.opacity = '1';
+  }, 2000);
+
+  document.getElementById('area-central').addEventListener('click', function() {
+    if (textoIdx >= textos.length - 1) return;
+    textoIdx++;
+
+    var textoPrincipal = document.getElementById('texto-principal');
+    var continuar = document.getElementById('continuar');
+    if (textoPrincipal) {
+      textoPrincipal.innerHTML = textos[textoIdx];
+    }
+    if (textoIdx === textos.length - 1 && continuar) {
+      continuar.style.opacity = '0';
+    }
+  });
+</script>
+</body>
+</html>
