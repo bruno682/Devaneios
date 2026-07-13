@@ -1,4 +1,7 @@
 (function () {
+  var isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches;
+  if (isTouch) return;
+
   var cursorsNormal = [
     'cursor/Vector 11.svg',
     'cursor/Vector 12.svg',
