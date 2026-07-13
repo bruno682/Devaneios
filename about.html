@@ -364,6 +364,24 @@
     if (e.deltaY > 0) irPara(chapterIdx + 1);
     else irPara(chapterIdx - 1);
   }, { passive: true });
+
+  // Mobile: 'wheel' não dispara em swipe de toque, então o avanço dos
+  // capítulos (ano/texto) precisa de touchstart/touchmove próprios.
+  var touchStartY = null;
+  var TOUCH_DELTA_MIN = 40;
+
+  window.addEventListener('touchstart', function(e) {
+    if (e.touches && e.touches.length === 1) touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  window.addEventListener('touchmove', function(e) {
+    if (touchStartY === null || scrollLocked) return;
+    var deltaY = touchStartY - e.touches[0].clientY;
+    if (Math.abs(deltaY) < TOUCH_DELTA_MIN) return;
+    touchStartY = null;
+    if (deltaY > 0) irPara(chapterIdx + 1);
+    else irPara(chapterIdx - 1);
+  }, { passive: true });
 </script>
 </body>
 </html>
