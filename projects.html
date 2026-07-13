@@ -308,7 +308,13 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
     renderer.domElement.releasePointerCapture(e.pointerId);
 });
 
-window.addEventListener('click', () => {
+window.addEventListener('click', (event) => {
+    // Em touch, um tap não gera pointermove antes do click, então `mouse`
+    // ficaria parado em (-1000,-1000) e o raycast nunca acertaria nada.
+    // Recalcula a partir da posição real do clique/tap antes de testar.
+    mouse.x =  (event.clientX / window.innerWidth)  * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(particles);
     if (intersects.length > 0 && intersects[0].object.userData.url) {
