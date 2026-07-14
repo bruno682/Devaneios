@@ -303,12 +303,26 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
     renderer.domElement.releasePointerCapture(e.pointerId);
 });
 
-window.addEventListener('click', (event) => {
-    // Em touch, um tap não gera pointermove antes do click, então `mouse`
-    // ficaria parado em (-1000,-1000) e o raycast nunca acertaria nada.
-    // Recalcula a partir da posição real do clique/tap antes de testar.
-    mouse.x =  (event.clientX / window.innerWidth)  * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+// ── TAP/CLICK via pointer events ──
+// Não usamos o evento 'click': em mobile (touch-action none + canvas)
+// ele nem sempre dispara. Detetamos tap manualmente: pointerdown seguido
+// de pointerup próximo no espaço e no tempo.
+let downX = 0, downY = 0, downTime = 0;
+
+renderer.domElement.addEventListener('pointerdown', (e) => {
+    renderer.domElement.releasePointerCapture(e.pointerId);
+    downX = e.clientX;
+    downY = e.clientY;
+    downTime = performance.now();
+});
+
+renderer.domElement.addEventListener('pointerup', (e) => {
+    const moved = Math.hypot(e.clientX - downX, e.clientY - downY);
+    const elapsed = performance.now() - downTime;
+    if (moved > 12 || elapsed > 500) return; // foi arrasto, não tap
+
+    mouse.x =  (e.clientX / window.innerWidth)  * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(hitboxes);
