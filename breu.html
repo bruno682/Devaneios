@@ -6,11 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bruno Eid</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    
+
+    <!-- Preload da fonte Breu: prioriza o download antes do CSS ser interpretado -->
+    <link rel="preload" href="Breu-Regular.woff2" as="font" type="font/woff2" crossorigin>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+  /* ── FONTE BREU ──
+     Sem este @font-face, 'Breu' não existe no browser e o marquee
+     caía no sans-serif (só funcionava em máquinas com a fonte instalada). */
+  @font-face {
+    font-family: 'Breu';
+    src: url('Breu-Regular.woff2') format('woff2');
+    font-display: swap;
+  }
+
   .intro-video-container {
     position: sticky;
     top: 0;
@@ -27,6 +39,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    pointer-events: none; /* toques atravessam: nunca abre o player nativo no mobile */
   }
 
   #scroll-indicator {
@@ -101,7 +114,10 @@
   .marquee span { font-size: 6rem; font-family: 'Breu', sans-serif; color: white; line-height: 0.85; cursor: default; transition: color 0.3s ease; }
   .scroll-wrapper { height: 400vh; position: relative; z-index: 1; }
   .sticky-container { position: sticky; top: 0; height: 100vh; overflow: hidden; }
-  .horizontal-content { display: flex; width: 300%; transition: transform 0.1s ease-out; }
+  /* Sem transition no transform: no mobile, os eventos de scroll chegam
+     irregulares e a transition ficava a "correr atrás" do valor, causando
+     o vai-e-volta. A suavidade agora vem da interpolação em rAF no JS. */
+  .horizontal-content { display: flex; width: 300%; will-change: transform; }
   /* ── SLIDES ── */
   .slide { width: 100%; height: 100vh; position: relative; display: flex; }
 
@@ -115,7 +131,7 @@
 
   /* Slide 2 – vídeo centrado + texto em baixo */
   .slide-2 { justify-content: center; align-items: center; }
-  .slide-2 video { height: 78vh; width: auto; max-width: 70%; display: block; }
+  .slide-2 video { height: 78vh; width: auto; max-width: 70%; display: block; pointer-events: none; }
   .s2-bl { position: absolute; bottom: 48px; left: 60px; color: white; font-family: 'Helvetica', sans-serif; font-size: 2.4rem; font-weight: 700; margin: 0; }
   .s2-br { position: absolute; bottom: 48px; right: 60px; color: white; font-family: 'Helvetica', sans-serif; font-size: 2.4rem; font-weight: 700; margin: 0; }
 
@@ -260,7 +276,8 @@
 
     <div class="intro-wrapper">
         <div class="intro-video-container">
-            <video src="breu-port.mp4" autoplay muted id="intro-video"></video>
+            <!-- playsinline: sem isto, iOS abre o player nativo em fullscreen ao toque -->
+            <video src="breu-port.mp4" autoplay muted playsinline id="intro-video"></video>
             <svg id="scroll-indicator" class="visible" xmlns="http://www.w3.org/2000/svg" width="253" height="31" viewBox="0 0 253 31" fill="none">
               <path d="M1.5 1.5H251M103 18.5L120 28.315L137 18.5" stroke="white" stroke-opacity="0.7" stroke-width="3" stroke-linecap="round"/>
             </svg>
@@ -303,7 +320,7 @@
 
                 <!-- SLIDE 2: vídeo centrado / texto em baixo -->
                 <div class="slide slide-2">
-                    <video src="Breu port 2.mp4" autoplay muted loop></video>
+                    <video src="Breu port 2.mp4" autoplay muted loop playsinline></video>
                     <p class="s2-bl">From structure to form.</p>
                     <p class="s2-br">From shadow to letter.</p>
                 </div>
@@ -327,7 +344,7 @@
                             <img src="Breumockup8.jpg" class="mockup-img" id="img-4">
                             <img src="Breu mockup 10.jpg" class="mockup-img" id="img-5">
                             <img src="Breu posteres.png" class="mockup-img" id="img-6">
-                            
+
                             <div id="mockup-ui">
                                 <span id="mockup-name">247</span>
                             </div>
@@ -353,18 +370,33 @@ let direction = 1;
 let speed = 0.5;
 let speedTimeout;
 
+// ── SLIDER HORIZONTAL ──
+// targetX é atualizado pelo scroll; currentX persegue-o suavemente em rAF.
+// Isto substitui a transition CSS que causava o glitch no scroll mobile.
+let targetX = 0;
+let currentX = 0;
+
 const scrollController = () => {
     const scrollWrapperTop = scrollWrapper.offsetTop;
     const scrollWrapperHeight = scrollWrapper.offsetHeight;
     const windowHeight = window.innerHeight;
     const windowScrollTop = window.scrollY;
 
-    if (windowScrollTop >= scrollWrapperTop && windowScrollTop <= scrollWrapperTop + scrollWrapperHeight - windowHeight) {
-        const scrollPercentage = (windowScrollTop - scrollWrapperTop) / (scrollWrapperHeight - windowHeight);
-        const newPosition = -scrollPercentage * (horizontalContent.scrollWidth - window.innerWidth);
-        horizontalContent.style.transform = `translateX(${newPosition}px)`;
-    }
+    // clamp: fora da zona sticky fixa nos extremos em vez de ignorar,
+    // evitando saltos ao entrar/sair da secção
+    const raw = (windowScrollTop - scrollWrapperTop) / (scrollWrapperHeight - windowHeight);
+    const scrollPercentage = Math.max(0, Math.min(raw, 1));
+    targetX = -scrollPercentage * (horizontalContent.scrollWidth - window.innerWidth);
 };
+
+function smoothSlide() {
+    currentX += (targetX - currentX) * 0.12;
+    // trava em micro-diferenças para não renderizar eternamente valores irrelevantes
+    if (Math.abs(targetX - currentX) < 0.1) currentX = targetX;
+    horizontalContent.style.transform = `translateX(${currentX}px)`;
+    requestAnimationFrame(smoothSlide);
+}
+smoothSlide();
 
 const animateMarquee = () => {
     marqueeData.forEach(data => {
@@ -410,7 +442,7 @@ if (mockupContainer) {
             mockupNameLabel.innerText = nomesProjetos[novoIndex];
             indexAtivo = novoIndex;
         }
- 
+
         const imgAtiva = mockupImages[indexAtivo];
         const moveX = (x - 0.5) * 40;
         const moveY = (y - 0.5) * 40;
