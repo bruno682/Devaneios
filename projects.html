@@ -244,12 +244,31 @@ renderer.domElement.style.touchAction = 'none';
 
 // ─── MOUSE ───────────────────────────────────────────────────────────────────
 const raycaster = new THREE.Raycaster();
-raycaster.params.Points.threshold = 0.1;
 const mouse = new THREE.Vector2(-1000, -1000);
 const mousePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 const mousePos3D = new THREE.Vector3(-1000, -1000, -1000);
 let mouseX = 0, mouseY = 0;
 let hoveredObject = null;
+
+// helpers de hover (evita repetir a mesma limpeza em 3 sítios)
+function clearHover() {
+    if (!hoveredObject) return;
+    hoveredObject.geometry.attributes.color.array.set(hoveredObject.userData.originalColorsArray);
+    hoveredObject.geometry.attributes.color.needsUpdate = true;
+    if (hoveredObject.userData.label) hoveredObject.userData.label.style.filter = '';
+    if (hoveredObject.userData.desc) hoveredObject.userData.desc.classList.remove('active');
+    hoveredObject = null;
+}
+
+function setHover(object) {
+    if (hoveredObject === object) return;
+    clearHover();
+    hoveredObject = object;
+    hoveredObject.geometry.attributes.color.array.set(hoveredObject.userData.hoverColorsArray);
+    hoveredObject.geometry.attributes.color.needsUpdate = true;
+    if (hoveredObject.userData.label) hoveredObject.userData.label.style.filter = 'brightness(0) invert(1)';
+    if (hoveredObject.userData.desc) hoveredObject.userData.desc.classList.add('active');
+}
 
 // Ouvir directamente no canvas com pointermove (não window/mousemove):
 // — evita o bloqueio de touch-action 'auto' que o browser aplica ao window
@@ -261,47 +280,21 @@ renderer.domElement.addEventListener('pointermove', (event) => {
     mouseY = event.clientY;
 
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(particles);
+    const intersects = raycaster.intersectObjects(hitboxes);
 
     if (intersects.length > 0) {
         document.body.style.cursor = 'pointer';
-        const object = intersects[0].object;
-
-        if (hoveredObject !== object) {
-            if (hoveredObject) {
-                hoveredObject.geometry.attributes.color.array.set(hoveredObject.userData.originalColorsArray);
-                hoveredObject.geometry.attributes.color.needsUpdate = true;
-                if (hoveredObject.userData.label) hoveredObject.userData.label.style.filter = '';
-                if (hoveredObject.userData.desc) hoveredObject.userData.desc.classList.remove('active');
-            }
-            hoveredObject = object;
-            hoveredObject.geometry.attributes.color.array.set(hoveredObject.userData.hoverColorsArray);
-            hoveredObject.geometry.attributes.color.needsUpdate = true;
-            if (hoveredObject.userData.label) hoveredObject.userData.label.style.filter = 'brightness(0) invert(1)';
-            if (hoveredObject.userData.desc) hoveredObject.userData.desc.classList.add('active');
-        }
+        setHover(intersects[0].object.userData.pointsRef);
     } else {
         document.body.style.cursor = 'default';
-        if (hoveredObject) {
-            hoveredObject.geometry.attributes.color.array.set(hoveredObject.userData.originalColorsArray);
-            hoveredObject.geometry.attributes.color.needsUpdate = true;
-            if (hoveredObject.userData.label) hoveredObject.userData.label.style.filter = '';
-            if (hoveredObject.userData.desc) hoveredObject.userData.desc.classList.remove('active');
-            hoveredObject = null;
-        }
+        clearHover();
     }
 });
 
 renderer.domElement.addEventListener('pointerleave', () => {
     mouse.set(-1000, -1000);
     document.body.style.cursor = 'default';
-    if (hoveredObject) {
-        hoveredObject.geometry.attributes.color.array.set(hoveredObject.userData.originalColorsArray);
-        hoveredObject.geometry.attributes.color.needsUpdate = true;
-        if (hoveredObject.userData.label) hoveredObject.userData.label.style.filter = '';
-        if (hoveredObject.userData.desc) hoveredObject.userData.desc.classList.remove('active');
-        hoveredObject = null;
-    }
+    clearHover();
 });
 
 // Sem isto, o browser faz setPointerCapture implícito no canvas ao clicar
@@ -318,19 +311,23 @@ window.addEventListener('click', (event) => {
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(particles);
-    if (intersects.length > 0 && intersects[0].object.userData.url) {
-        const url = intersects[0].object.userData.url;
-        const overlay = document.getElementById('page-transition');
-        if (!overlay) { window.location.href = url; return; }
-        sessionStorage.setItem('pageTransition', '1');
-        overlay.classList.add('cobrir');
-        setTimeout(() => { window.location.href = url; }, 900);
+    const intersects = raycaster.intersectObjects(hitboxes);
+    if (intersects.length > 0) {
+        const target = intersects[0].object.userData.pointsRef;
+        if (target.userData.url) {
+            const url = target.userData.url;
+            const overlay = document.getElementById('page-transition');
+            if (!overlay) { window.location.href = url; return; }
+            sessionStorage.setItem('pageTransition', '1');
+            overlay.classList.add('cobrir');
+            setTimeout(() => { window.location.href = url; }, 900);
+        }
     }
 });
 
 // ─── PARTÍCULAS ───────────────────────────────────────────────────────────────
 const particles = [];
+const hitboxes = [];
 const loader = new GLTFLoader();
 const repulsionShaders = [];
 
@@ -440,6 +437,20 @@ function loadModelAsParticles(path, color, positionX, positionY = 0, rotationX =
         particleSystem.userData.baseScale = particleSystem.scale.x;
         particleSystem.userData.desktopX  = positionX;
         particleSystem.userData.desktopY  = positionY;
+
+        // ── HITBOX invisível para raycast confiável (essencial no touch) ──
+        // Raycast contra pontos individuais exige precisão que o dedo não tem;
+        // uma esfera à volta do modelo torna todo o volume clicável.
+        geometry.computeBoundingSphere();
+        const bs = geometry.boundingSphere;
+        const hitbox = new THREE.Mesh(
+            new THREE.SphereGeometry(bs.radius * 1.15, 8, 8),
+            new THREE.MeshBasicMaterial({ visible: false })
+        );
+        hitbox.position.copy(bs.center);
+        hitbox.userData.pointsRef = particleSystem;
+        particleSystem.add(hitbox); // filho: acompanha posição/escala/rotação
+        hitboxes.push(hitbox);
 
         scene.add(particleSystem);
         particles.push(particleSystem);
