@@ -1,590 +1,383 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bruno Eid — Projectos</title>
-<script>
-  document.documentElement.style.backgroundColor = '#ffffff';
-</script>
-<script>
-  // Impede o drag nativo do browser em links/imagens, que trava o
-  // pointermove (e o cursor 3D) até o botão direito ser pressionado.
-  document.addEventListener('dragstart', function (e) { e.preventDefault(); }, { capture: true });
-</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keep Moving</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+
+        canvas { display: block; }
+
+        #hint {
+            position: fixed;
+            bottom: 36px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .hint-icon {
+            display: block;
+            animation: hint-orbit 2.8s linear infinite;
+        }
+        @keyframes hint-orbit {
+            from { transform: rotate(0deg)   translateY(-18px) rotate(0deg); }
+            to   { transform: rotate(360deg) translateY(-18px) rotate(-360deg); }
+        }
+
+        .page-header {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+            display: flex; align-items: flex-start; justify-content: space-between;
+            padding: 20px; pointer-events: none;
+        }
+        .page-header a { pointer-events: auto; }
+        .page-titulo { text-align: center; }
+        .page-titulo h1 { margin: 0; color: #ffffff; font-family: "Instrument Sans", sans-serif; font-size: 37px; font-weight: 700; line-height: normal; transition: color 0.4s ease; }
+        .page-titulo h1 a { color: inherit; text-decoration: none; }
+        .page-titulo p { margin: 0; color: rgba(255,255,255,0.5); font-family: "Instrument Sans", sans-serif; font-size: 14px; font-weight: 600; line-height: normal; text-transform: uppercase; transition: color 0.4s ease; }
+
+        /* botões brancos para fundo escuro → invertem no estado final */
+        .btn-back-svg circle, .btn-right-svg circle { fill: #ffffff; transition: fill 0.4s ease; }
+        .btn-back-svg path { fill: #1B1B1B; transition: fill 0.4s ease; }
+        .btn-right-svg rect { fill: #1B1B1B; transition: fill 0.4s ease; }
+
+        body.estado-final .page-titulo h1 { color: #1B1B1B; }
+        body.estado-final .page-titulo p { color: #555; }
+        body.estado-final .btn-back-svg circle { fill: #1B1B1B; }
+        body.estado-final .btn-back-svg path { fill: #ffffff; }
+        body.estado-final .btn-right-svg circle { fill: #1B1B1B; }
+        body.estado-final .btn-right-svg rect { fill: #ffffff; }
+        body.estado-final #hint { color: rgba(0,0,0,0.5); }
+
+        @media (max-width: 900px) {
+            .page-titulo h1 { font-size: clamp(18px, 3vw, 37px); }
+            .page-header { padding: 14px; }
+            .page-header a svg[width="45"] { width: 36px; height: 36px; }
+            .page-header a svg[width="60"] { width: 46px; height: 46px; }
+        }
+        @media (max-width: 600px) {
+            .page-titulo h1 { font-size: 18px; }
+            .page-titulo p  { font-size: 11px; }
+            .page-header a svg[width="45"] { width: 30px; height: 30px; }
+            .page-header a svg[width="60"] { width: 38px; height: 38px; }
+        }
+
+        .page-transition-overlay {
+            position: fixed; inset: 0; z-index: 99999; background: #1b1b1b;
+            clip-path: circle(0% at 50% 100%); pointer-events: none;
+            transition: clip-path 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+        }
+        .page-transition-overlay.cobrir { clip-path: circle(150% at 50% 100%); }
+    </style>
 <script src="cursor.js" defer></script>
 <script src="transitions.js" defer></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-  }
-}
-</script>
-<style>
-  *, *::before, *::after { box-sizing: border-box; }
-
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    background-color: #ffffff;
-    font-family: "Instrument Sans", sans-serif;
-    overflow: hidden;
-  }
-
-  canvas {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 0;
-  }
-
-  /* ── HEADER ── */
-  .header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 30;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: 20px;
-    pointer-events: none;
-  }
-
-  .header a { pointer-events: auto; }
-
-  .titulo { text-align: center; }
-
-  .titulo h1 {
-    margin: 0;
-    color: #1B1B1B;
-    font-family: "Instrument Sans", sans-serif;
-    font-size: 37px;
-    font-weight: 700;
-    line-height: normal;
-  }
-
-  .titulo h1 a { color: inherit; text-decoration: none; }
-
-  .titulo p {
-    margin: 0;
-    color: #9F9F9F;
-    font-family: "Instrument Sans", sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: normal;
-    text-transform: uppercase;
-  }
-
-  /* ── LABELS DOS MODELOS ── */
-  .model-label {
-    position: fixed;
-    transform: translateX(-50%);
-    z-index: 20;
-    color: #1B1B1B;
-    font-family: "Instrument Sans", sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    pointer-events: none;
-    transition: filter 0.2s ease;
-    white-space: nowrap;
-  }
-
-  /* ── PAINEL DE DESCRIÇÃO (hover) ── */
-  .model-desc {
-    position: fixed;
-    bottom: 60px;
-    left: 50%;
-    transform: translateX(-50%) translateY(16px);
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    gap: 28px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
-
-  .model-desc.active {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  .model-desc img {
-    width: 380px;
-    height: 240px;
-    object-fit: cover;
-    display: block;
-    flex-shrink: 0;
-  }
-
-  .desc-content h3 {
-    margin: 0 0 10px;
-    color: #000000;
-    font-family: "Instrument Sans", sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    text-transform: uppercase;
-  }
-
-  .desc-content p {
-    margin: 0;
-    color: #000000;
-    font-family: "Instrument Sans", sans-serif;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 1.6;
-    max-width: 240px;
-  }
-
-  /* ── TRANSIÇÃO ── */
-  .page-transition-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 99999;
-    background: #1b1b1b;
-    clip-path: circle(0% at 50% 100%);
-    pointer-events: none;
-    transition: clip-path 0.9s cubic-bezier(0.76, 0, 0.24, 1);
-  }
-
-  .page-transition-overlay.cobrir {
-    clip-path: circle(150% at 50% 100%);
-  }
-
-  @media (max-width: 900px) {
-    .titulo h1 { font-size: clamp(18px, 3vw, 37px); }
-    .model-desc { flex-direction: column; gap: 14px; bottom: 20px; }
-    .model-desc img { width: 100%; max-width: 320px; height: 180px; }
-    .desc-content h3 { font-size: 16px; }
-    .desc-content p { font-size: 12px; max-width: 300px; }
-  }
-  @media (max-width: 600px) {
-    .titulo h1 { font-size: 18px; }
-    .model-desc { display: none; }
-  }
-</style>
-
 </head>
 <body>
-  <div class="page-transition-overlay" id="page-transition"></div>
-  <script>
-  (function() {
-    var overlay = document.getElementById('page-transition');
-    if (!overlay) return;
-    if (sessionStorage.getItem('pageTransition') === '1') {
-      sessionStorage.removeItem('pageTransition');
-      overlay.style.transition = 'none';
-      overlay.classList.add('cobrir');
-      overlay.offsetHeight;
-      overlay.style.transition = '';
-      requestAnimationFrame(function() {
-        requestAnimationFrame(function() { overlay.classList.remove('cobrir'); });
-      });
-    }
-    window.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('a.page-link').forEach(function(link) {
-        link.addEventListener('click', function(e) {
-          e.preventDefault();
-          var url = link.getAttribute('href');
-          sessionStorage.setItem('pageTransition', '1');
-          overlay.classList.add('cobrir');
-          setTimeout(function() { window.location.href = url; }, 900);
+    <div class="page-transition-overlay" id="page-transition"></div>
+    <script>
+    (function() {
+        var overlay = document.getElementById('page-transition');
+        if (!overlay) return;
+        if (sessionStorage.getItem('pageTransition') === '1') {
+            sessionStorage.removeItem('pageTransition');
+            overlay.style.transition = 'none';
+            overlay.classList.add('cobrir');
+            overlay.offsetHeight;
+            overlay.style.transition = '';
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() { overlay.classList.remove('cobrir'); });
+            });
+        }
+        window.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('a.page-link').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var url = link.getAttribute('href');
+                    sessionStorage.setItem('pageTransition', '1');
+                    overlay.classList.add('cobrir');
+                    setTimeout(function() { window.location.href = url; }, 900);
+                });
+            });
         });
-      });
-    });
-  })();
-  </script>
+    })();
+    </script>
 
-  <header class="header">
-    <a href="home.html" class="page-link">
-      <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" fill="none">
-        <circle cx="22.5" cy="22.5" r="22.5" fill="#1B1B1B"/>
-        <path d="M23.2788 13H29L20.7212 23L29 33H23.2788L15 23L23.2788 13Z" fill="white"/>
-      </svg>
-    </a>
+    <header class="page-header">
+        <a href="experiences.html" class="page-link">
+            <svg class="btn-back-svg" xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" fill="none">
+                <circle cx="22.5" cy="22.5" r="22.5"/>
+                <path d="M23.2788 13H29L20.7212 23L29 33H23.2788L15 23L23.2788 13Z"/>
+            </svg>
+        </a>
+        <div class="page-titulo">
+            <h1><a href="index.html" class="page-link">BRUNO EID</a></h1>
+            <p>Keep Moving</p>
+        </div>
+        <a href="pagina2.html" class="page-link">
+            <svg class="btn-right-svg" xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="none">
+                <circle cx="22.5" cy="37.5" r="22.5"/>
+                <circle cx="37.5" cy="22.5" r="22.5"/>
+                <rect x="25" y="25" width="10" height="10"/>
+            </svg>
+        </a>
+    </header>
 
-    <div class="titulo">
-      <h1><a href="index.html" class="page-link">BRUNO EID</a></h1>
-      <p>Projectos</p>
+    <div id="hint">
+        <svg class="hint-icon" xmlns="http://www.w3.org/2000/svg" width="89" height="124" viewBox="0 0 89 124" fill="none">
+            <path d="M36.363 33.3428L40.5163 48.8428M68.8015 29.6826L81.589 77.4061C86.1586 94.4602 76.038 111.99 58.9839 116.559C41.916 121.133 24.3751 110.992 19.8213 93.9189L7.08834 46.1809C2.54463 29.1457 12.6632 11.6508 29.6949 7.09427C46.731 2.53657 64.2372 12.6483 68.8015 29.6826Z" stroke="#F4F4F4" stroke-width="12" stroke-linecap="round"/>
+        </svg>
     </div>
+    <div id="logo-container" data-color="#ffffff" style="display:none;"></div>
 
-    <a href="devaneios-projects.html" class="page-link">
-      <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="none">
-        <circle cx="22.5" cy="37.5" r="22.5" fill="#1B1B1B"/>
-        <circle cx="37.5" cy="22.5" r="22.5" fill="#1B1B1B"/>
-        <rect x="25" y="25" width="10" height="10" fill="white"/>
-      </svg>
-    </a>
-  </header>
+    <script>
+let tempo = 0
+let hint
+let frases = [
+  { texto: "The struggle itself is enough.", autor: "Albert Camus", tempo: 200, px: 0.08, py: 0.10 },
+  { texto: "Becoming is better than being.", autor: "Friedrich Nietzsche", tempo: 350, px: 0.70, py: 0.90 },
+  { texto: "To begin is human.", autor: "Hannah Arendt", tempo: 500, px: 0.06, py: 0.55 },
+  { texto: "All things flow.", autor: "Heraclitus", tempo: 650, px: 0.65, py: 0.28 },
+  { texto: "No man ever steps in the same river twice.", autor: "Heraclitus", tempo: 750, px: 0.06, py: 0.26 },
+  { texto: "Soon you will have forgotten everything; soon everything will have forgotten you.", autor: "Marcus Aurelius", tempo: 850, px: 0.04, py: 0.85 },
+  { texto: "You are afraid of dying, and yet you do not know how to live.", autor: "Seneca", tempo: 950, px: 0.60, py: 0.12 }
+]
+let glitch = false
+let glitchFrames = 0
+let fim = false
+let idleFrames = 10
 
-<script type="module">
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+let rastroColorido = [];
+let rastroBranco = [];
+let matiz = 0;
+let tempoEfeito = 0;
+let tamanhoBrancoAtual = 22;
+let metaTamanhoBranco = 22;
 
-// ─── CENA ────────────────────────────────────────────────────────────────────
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(new THREE.Color('#ffffff'), 1);
-document.body.appendChild(renderer.domElement);
-renderer.domElement.style.touchAction = 'none';
+function setup() {
+  createCanvas(windowWidth, windowHeight)
+  textAlign(CENTER, CENTER)
+  textFont('Inter')
+  hint = select('#hint')
+  colorMode(HSB, 360, 100, 100, 255)
+}
 
-// ─── MOUSE ───────────────────────────────────────────────────────────────────
-const raycaster = new THREE.Raycaster();
-raycaster.params.Points.threshold = 0.1;
-const mouse = new THREE.Vector2(-1000, -1000);
-const mousePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
-const mousePos3D = new THREE.Vector3(-1000, -1000, -1000);
-let mouseX = 0, mouseY = 0;
-let hoveredObject = null;
+function draw() {
+  if (fim) {
+    background(0, 0, 100)
+    textAlign(CENTER, CENTER)
+    fill(0)
 
-// Ouvir directamente no canvas com pointermove (não window/mousemove):
-// — evita o bloqueio de touch-action 'auto' que o browser aplica ao window
-// — garante que os eventos chegam mesmo sem botão pressionado
-renderer.domElement.addEventListener('pointermove', (event) => {
-    mouse.x =  (event.clientX / window.innerWidth)  * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    mouseX = event.clientX;
-    mouseY = event.clientY;
+    let frasePrincipal = "Life is long, if you know how to use it."
+    let fraseHover = "For dust you are, and to dust you shall return."
+    let autorPrincipal = "Seneca"
+    let autorHover = "Genesis 3:19"
 
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(particles);
+    let tsz = constrain(width * 0.026, 16, 36)
+    textSize(tsz)
+    let x = width / 2
+    let y = height / 2
+    let hover = mouseX > x - width * 0.35 && mouseX < x + width * 0.35 && mouseY > y - tsz * 2 && mouseY < y + tsz * 2
 
-    if (intersects.length > 0) {
-        document.body.style.cursor = 'pointer';
-        const object = intersects[0].object;
-
-        if (hoveredObject !== object) {
-            if (hoveredObject) {
-                hoveredObject.geometry.attributes.color.array.set(hoveredObject.userData.originalColorsArray);
-                hoveredObject.geometry.attributes.color.needsUpdate = true;
-                if (hoveredObject.userData.label) hoveredObject.userData.label.style.filter = '';
-                if (hoveredObject.userData.desc) hoveredObject.userData.desc.classList.remove('active');
-            }
-            hoveredObject = object;
-            hoveredObject.geometry.attributes.color.array.set(hoveredObject.userData.hoverColorsArray);
-            hoveredObject.geometry.attributes.color.needsUpdate = true;
-            if (hoveredObject.userData.label) hoveredObject.userData.label.style.filter = 'brightness(0) invert(1)';
-            if (hoveredObject.userData.desc) hoveredObject.userData.desc.classList.add('active');
-        }
+    if (hover) {
+      text(fraseHover, x, y)
+      textSize(tsz * 0.5)
+      text(autorHover, x, y + tsz * 1.8)
     } else {
-        document.body.style.cursor = 'default';
-        if (hoveredObject) {
-            hoveredObject.geometry.attributes.color.array.set(hoveredObject.userData.originalColorsArray);
-            hoveredObject.geometry.attributes.color.needsUpdate = true;
-            if (hoveredObject.userData.label) hoveredObject.userData.label.style.filter = '';
-            if (hoveredObject.userData.desc) hoveredObject.userData.desc.classList.remove('active');
-            hoveredObject = null;
-        }
+      text(frasePrincipal, x, y)
+      textSize(tsz * 0.5)
+      text(autorPrincipal, x, y + tsz * 1.8)
     }
-});
+    return
+  }
 
-renderer.domElement.addEventListener('pointerleave', () => {
-    mouse.set(-1000, -1000);
-    document.body.style.cursor = 'default';
-    if (hoveredObject) {
-        hoveredObject.geometry.attributes.color.array.set(hoveredObject.userData.originalColorsArray);
-        hoveredObject.geometry.attributes.color.needsUpdate = true;
-        if (hoveredObject.userData.label) hoveredObject.userData.label.style.filter = '';
-        if (hoveredObject.userData.desc) hoveredObject.userData.desc.classList.remove('active');
-        hoveredObject = null;
+  background(0)
+
+  if (!fim && !glitch) {
+    matiz = (matiz + 1.2) % 360;
+    tempoEfeito += 0.02;
+
+    let parado = mouseX === pmouseX && mouseY === pmouseY;
+    let distancia = dist(pmouseX, pmouseY, mouseX, mouseY);
+
+    if (parado) { metaTamanhoBranco = 80; } else { metaTamanhoBranco = 22; }
+    tamanhoBrancoAtual = lerp(tamanhoBrancoAtual, metaTamanhoBranco, 0.1);
+
+    let fatorVelocidade = map(distancia, 0, 100, 1, 5, true);
+    let passos = parado ? 1 : max(distancia / 8, 1);
+
+    for (let i = 0; i < passos; i++) {
+      let x = lerp(pmouseX, mouseX, i / passos);
+      let y = lerp(pmouseY, mouseY, i / passos);
+      let forcaDistorcao = parado ? 30 : 15;
+      let offsetX = (noise(tempoEfeito, i * 0.1) - 0.5) * forcaDistorcao;
+      let offsetY = (noise(tempoEfeito + 100, i * 0.1) - 0.5) * forcaDistorcao;
+
+      rastroColorido.push(new ParticulaNebulosa(x + offsetX, y + offsetY, matiz, 40, 180, 1.3 * fatorVelocidade, false));
+      if (!parado) {
+        rastroBranco.push(new ParticulaNebulosa(x + offsetX * 0.5, y + offsetY * 0.5, 0, 20, 0, 2.5 * fatorVelocidade, true));
+      }
     }
-});
 
-// Sem isto, o browser faz setPointerCapture implícito no canvas ao clicar
-// e todos os eventos de pointer ficam "presos" no canvas até direito ser pressionado
-renderer.domElement.addEventListener('pointerdown', (e) => {
-    renderer.domElement.releasePointerCapture(e.pointerId);
-});
+    desenharRastro(rastroColorido);
+    desenharRastro(rastroBranco);
+    desenharFocoBranco(mouseX, mouseY, tamanhoBrancoAtual);
+  }
 
-window.addEventListener('click', (event) => {
-    // Em touch, um tap não gera pointermove antes do click, então `mouse`
-    // ficaria parado em (-1000,-1000) e o raycast nunca acertaria nada.
-    // Recalcula a partir da posição real do clique/tap antes de testar.
-    mouse.x =  (event.clientX / window.innerWidth)  * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  let movimento = dist(mouseX, mouseY, pmouseX, pmouseY)
 
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(particles);
-    if (intersects.length > 0 && intersects[0].object.userData.url) {
-        const url = intersects[0].object.userData.url;
-        const overlay = document.getElementById('page-transition');
-        if (!overlay) { window.location.href = url; return; }
-        sessionStorage.setItem('pageTransition', '1');
-        overlay.classList.add('cobrir');
-        setTimeout(() => { window.location.href = url; }, 900);
+  if (movimento > 0.5) {
+    tempo += 1.5
+    idleFrames = 0
+    hint.style('opacity', '0')
+  } else {
+    tempo -= 2
+    idleFrames++
+  }
+
+  if (idleFrames > 20 && !fim) {
+    hint.style('opacity', '0.6')
+  }
+
+  tempo = constrain(tempo, 0, 1300)
+
+  if (tempo <= 0) {
+    fill(0, 0, 100)
+    textAlign(CENTER, CENTER)
+    textSize(constrain(width * 0.038, 22, 52))
+    text("Keep moving", width / 2, height / 2)
+    return
+  }
+
+  let tsz = constrain(width * 0.018, 12, 26)
+  let maxW = constrain(width * 0.34, 200, 520)
+  let pad = 24 // margem mínima das bordas
+  textAlign(LEFT, TOP)
+  textSize(tsz)
+  fill(0, 0, 100)
+
+  for (let f of frases) {
+    if (tempo > f.tempo) {
+      // clamp posição para não sair do ecrã
+      let posX = constrain(f.px * width, pad, width - maxW - pad)
+      let posY = constrain(f.py * height, 80, height - tsz * 5)
+
+      // área de hover: maxW × ~3 linhas
+      let hoverH = tsz * 3.5
+      let hover = mouseX > posX && mouseX < posX + maxW && mouseY > posY && mouseY < posY + hoverH
+
+      if (hover) {
+        textStyle(ITALIC)
+        text(f.autor, posX, posY, maxW)
+        textStyle(NORMAL)
+      } else {
+        text(f.texto, posX, posY, maxW)
+      }
     }
-});
+  }
 
-// ─── PARTÍCULAS ───────────────────────────────────────────────────────────────
-const particles = [];
-const loader = new GLTFLoader();
-const repulsionShaders = [];
+  let tamanhoMax
+  if (tempo < 300) {
+    tamanhoMax = map(tempo, 0, 300, 10, 380)
+  } else if (tempo < 800) {
+    tamanhoMax = map(tempo, 300, 800, 380, 740)
+  } else if (tempo < 950) {
+    tamanhoMax = map(tempo, 800, 1050, 740, 1240)
+  } else if (tempo < 1150) {
+    tamanhoMax = map(tempo, 950, 1150, 1240, 1800)
+  } else {
+    glitch = true
+  }
 
-function updateRepulsion() {
-    const val = window.innerWidth < 900 ? 0.35 : 1.0;
-    repulsionShaders.forEach(s => { if (s.uniforms.uRepulsion) s.uniforms.uRepulsion.value = val; });
+  let hue = tempo % 360
+  noStroke()
+  for (let r = tamanhoMax; r > 0; r -= 6) {
+    let alpha = map(r, 0, tamanhoMax, 12, 0)
+    fill(hue, 100, 100, alpha)
+    ellipse(width / 2, height / 2, r, r)
+  }
+
+  if (glitch) {
+    glitchFrames++
+    if (glitchFrames < 15 || (glitchFrames > 17 && glitchFrames < 20)) {
+      background(0, 0, 100)
+    }
+    if (glitchFrames === 26) {
+      document.body.classList.add('estado-final');
+    }
+    if (glitchFrames > 25) {
+      fim = true
+    }
+  }
 }
 
-function loadModelAsParticles(path, color, positionX, positionY = 0, rotationX = 0, rotationY = 0, scale = 1, labelText = null, targetUrl = null, labelOffsetX = 0, descData = null, mobileLabelOffsetX = 0) {
-    let labelElement = null;
-    let descElement = null;
-
-    if (labelText) {
-        labelElement = document.createElement('span');
-        labelElement.className = 'model-label';
-        labelElement.innerText = labelText;
-        document.body.appendChild(labelElement);
-    }
-
-    if (descData) {
-        descElement = document.createElement('div');
-        descElement.className = 'model-desc';
-        descElement.innerHTML = `
-            ${descData.image ? `<img src="${descData.image}" alt="${descData.title}">` : ''}
-            <div class="desc-content">
-                <h3>${descData.title}</h3>
-                <p>${descData.text}</p>
-            </div>
-        `;
-        document.body.appendChild(descElement);
-    }
-
-    loader.load(path, (gltf) => {
-        const originalMesh = gltf.scene.children[0];
-        const geometry = originalMesh.geometry;
-
-        if (rotationX !== 0) geometry.rotateX(rotationX);
-        if (rotationY !== 0) geometry.rotateY(rotationY);
-
-        const count = geometry.attributes.position.count;
-        const colors = new Float32Array(count * 3);
-        const originalColorsArray = new Float32Array(count * 3);
-        const hoverColorsArray = new Float32Array(count * 3);
-        const baseColor = new THREE.Color(color);
-
-        for (let i = 0; i < count; i++) {
-            originalColorsArray[i * 3]     = baseColor.r;
-            originalColorsArray[i * 3 + 1] = baseColor.g;
-            originalColorsArray[i * 3 + 2] = baseColor.b;
-
-            const randColor = new THREE.Color();
-            randColor.setHSL(Math.random(), 1.0, 0.5);
-            hoverColorsArray[i * 3]     = randColor.r;
-            hoverColorsArray[i * 3 + 1] = randColor.g;
-            hoverColorsArray[i * 3 + 2] = randColor.b;
-
-            colors[i * 3]     = baseColor.r;
-            colors[i * 3 + 1] = baseColor.g;
-            colors[i * 3 + 2] = baseColor.b;
-        }
-
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-        const pointsMaterial = new THREE.PointsMaterial({
-            color: 0xffffff,
-            size: 0.025,
-            transparent: true,
-            sizeAttenuation: true,
-            vertexColors: true
-        });
-
-        pointsMaterial.onBeforeCompile = (shader) => {
-            shader.uniforms.uMousePos = { value: mousePos3D };
-            shader.uniforms.uRepulsion = { value: 1.0 };
-            repulsionShaders.push(shader);
-            shader.vertexShader = `uniform vec3 uMousePos;\nuniform float uRepulsion;\n` + shader.vertexShader;
-            shader.vertexShader = shader.vertexShader.replace(
-                `#include <project_vertex>`,
-                `
-                vec4 worldPosition = modelMatrix * vec4(transformed, 1.0);
-                float dist = distance(worldPosition.xyz, uMousePos);
-                float maxDist = 1.0 * uRepulsion;
-                if (dist < maxDist) {
-                    vec3 dir = normalize(worldPosition.xyz - uMousePos);
-                    float force = pow((maxDist - dist) / maxDist, 2.0) * 1.5 * uRepulsion;
-                    worldPosition.xyz += dir * force;
-                }
-                vec4 mvPosition = viewMatrix * worldPosition;
-                gl_Position = projectionMatrix * mvPosition;
-                `
-            );
-        };
-
-        const particleSystem = new THREE.Points(geometry, pointsMaterial);
-        particleSystem.position.x = positionX;
-        particleSystem.position.y = positionY;
-        if (scale !== 1) particleSystem.scale.set(scale, scale, scale);
-
-        particleSystem.userData.label = labelElement;
-        particleSystem.userData.desc = descElement;
-        particleSystem.userData.url = targetUrl;
-        particleSystem.userData.originalColorsArray = originalColorsArray;
-        particleSystem.userData.hoverColorsArray = hoverColorsArray;
-        particleSystem.userData.labelOffsetX = labelOffsetX;
-        particleSystem.userData.mobileLabelOffsetX = mobileLabelOffsetX;
-
-        particleSystem.userData.baseScale = particleSystem.scale.x;
-        particleSystem.userData.desktopX  = positionX;
-        particleSystem.userData.desktopY  = positionY;
-
-        scene.add(particleSystem);
-        particles.push(particleSystem);
-        applyLayout();
-        updateRepulsion();
-    });
+function desenharRastro(lista) {
+  for (let i = lista.length - 1; i >= 0; i--) {
+    lista[i].atualizar();
+    lista[i].desenhar();
+    if (lista[i].estaMorto()) lista.splice(i, 1);
+  }
 }
 
-// ─── LAYOUT RESPONSIVO ────────────────────────────────────────────────────────
-// Breakpoints: acima de 1200px → desktop completo; abaixo de 750px → 2 linhas
-const W_FULL   = 1200;
-const W_GRID   = 750;
-
-const GRID_POSITIONS = [
-    [-0.7,  1.3],
-    [ 0.7,  1.3],
-    [ 0,    0.1],
-];
-
-// Média das posições desktopX (Breu, Ovar, Enklav) — usada para centralizar o conjunto
-const CENTER_RAW = (-1.3 + 0.9 + 3) / 3;
-const DESKTOP_X_OFFSET = -0.2; // deslocamento extra para a esquerda, só em janelas grandes (some conforme a janela encolhe)
-
-function lerp(a, b, t) { return a + (b - a) * Math.max(0, Math.min(1, t)); }
-
-function applyLayout() {
-    if (particles.length === 0) return;
-    const w = window.innerWidth;
-
-    // t: 1 = desktop pleno, 0 = comprimido máximo (antes do grid)
-    const t = (w - W_GRID) / (W_FULL - W_GRID);
-    const useGrid = w < W_GRID;
-
-    particles.forEach((p, i) => {
-        const base = p.userData.baseScale || p.scale.x;
-
-        if (useGrid) {
-            // 2 em cima, ENKLAV centralizado embaixo
-            p.position.x = GRID_POSITIONS[i][0];
-            p.position.y = GRID_POSITIONS[i][1];
-            p.scale.setScalar(base * 0.55);
-        } else {
-            // comprime gradualmente a linha única
-            const xFactor = lerp(0.45, 1.0, t);
-            const sFactor = lerp(0.60, 1.0, t);
-            p.position.x = (p.userData.desktopX - CENTER_RAW) * xFactor + DESKTOP_X_OFFSET * t;
-            p.position.y = p.userData.desktopY;
-            p.scale.setScalar(base * sFactor);
-        }
-    });
-}
-
-// ─── CARREGAR MODELOS ─────────────────────────────────────────────────────────
-loadModelAsParticles('3D/Who Breu.glb', 0x000000, -1.3, 1, Math.PI / 2, 4, 0.6, 'BREU', 'breu.html', 0, {
-    title: 'BREU',
-    text: 'Uma tipografia que surge da sombra, da relação de Portugal com a Turquia',
-    image: 'Breu mockup 6.jpg'
-});
-loadModelAsParticles('3D/Who Ovar.glb', 0x000000, 0.9, 1, 0, 0, 0.7, 'OVAR', 'ovar.html', 0, {
-    title: 'OVAR',
-    text: 'Uma identidade criada para um teatro, conversando com memórias',
-    image: 'billboard ovar.png'
-});
-loadModelAsParticles('3D/Who Enklav.glb', 0x000000, 3, 1, 0, 0, 0.7, 'ENKLAV', 'enklav.html', 30, {
-    title: 'ENKLAV',
-    text: 'Um aplicativo de trilha que te convida a pausa.',
-    image: 'Enklav run.png'
-}, -30);
-
-// ─── CÂMERA ───────────────────────────────────────────────────────────────────
-camera.position.z = 5;
-camera.position.y = 1.0;
-camera.lookAt(scene.position);
-
-// ─── PARTÍCULAS DE FUNDO ──────────────────────────────────────────────────────
-const bgGeometry = new THREE.BufferGeometry();
-const bgCount = 5000;
-const bgPos = new Float32Array(bgCount * 3);
-const bgColors = new Float32Array(bgCount * 3);
-
-for (let i = 0; i < bgCount; i++) {
-    bgPos[i * 3]     = (Math.random() - 0.5) * 15;
-    bgPos[i * 3 + 1] = (Math.random() - 0.5) * 15;
-    bgPos[i * 3 + 2] = (Math.random() - 0.5) * 15;
-    const c = new THREE.Color().setHSL(Math.random(), 1.0, 0.5);
-    bgColors[i * 3] = c.r; bgColors[i * 3 + 1] = c.g; bgColors[i * 3 + 2] = c.b;
-}
-
-bgGeometry.setAttribute('position', new THREE.BufferAttribute(bgPos, 3));
-bgGeometry.setAttribute('color', new THREE.BufferAttribute(bgColors, 3));
-
-const bgMesh = new THREE.Points(bgGeometry, new THREE.PointsMaterial({
-    size: 0.025,
-    color: 0xffffff,
-    transparent: true,
-    vertexColors: true
-}));
-scene.add(bgMesh);
-
-// ─── ANIMAÇÃO ─────────────────────────────────────────────────────────────────
-const clock = new THREE.Clock();
-
-function animate() {
-    requestAnimationFrame(animate);
-
-    raycaster.setFromCamera(mouse, camera);
-    if (!raycaster.ray.intersectPlane(mousePlane, mousePos3D)) {
-        mousePos3D.set(-1000, -1000, -1000);
+class ParticulaNebulosa {
+  constructor(x, y, h, tamIni, tamFim, velSumiço, ehBranco) {
+    this.x = x; this.y = y; this.matiz = h; this.vida = 100;
+    this.tamIni = tamIni; this.tamFim = tamFim; this.velSumiço = velSumiço;
+    this.ehBranco = ehBranco; this.semente = random(1000); this.derivaY = random(-0.5, -0.1);
+  }
+  atualizar() {
+    this.vida -= this.velSumiço;
+    this.y += this.derivaY;
+    let variacao = noise(tempoEfeito + this.semente) * 20;
+    this.tamanhoAtual = map(this.vida, 100, 0, this.tamIni, this.tamFim) + variacao;
+  }
+  desenhar() {
+    if (this.tamanhoAtual <= 0.1 || this.vida <= 0) return;
+    let corCentro, corBorda;
+    if (this.ehBranco) {
+      corCentro = color(0, 0, 100, this.vida * 2.55);
+      corBorda = color(0, 0, 100, 0);
+    } else {
+      corCentro = color(this.matiz, 90, 100, this.vida * 1.02);
+      corBorda = color(this.matiz, 90, 100, 0);
     }
-
-    const t = clock.getElapsedTime();
-    bgMesh.rotation.y = t * 0.04;
-    if (mouseX > 0) {
-        bgMesh.rotation.x = -mouseY * (t * 0.00001);
-        bgMesh.rotation.y =  mouseX * (t * 0.00001);
-    }
-
-    particles.forEach(p => {
-        p.rotation.y += 0.01;
-
-        if (p.userData.label) {
-            const v = new THREE.Vector3();
-            p.getWorldPosition(v);
-            v.y -= window.innerWidth < W_GRID ? 0.5 : 1;
-            v.project(camera);
-            const baseOffset = p.userData.labelOffsetX || 0;
-            const mobileOffset = window.innerWidth < W_GRID ? (p.userData.mobileLabelOffsetX || 0) : 0;
-            const x = (v.x * 0.5 + 0.5) * window.innerWidth + baseOffset + mobileOffset;
-            const y = -(v.y * 0.5 - 0.5) * window.innerHeight;
-            p.userData.label.style.left = `${x}px`;
-            p.userData.label.style.top  = `${y}px`;
-        }
-    });
-
-    renderer.render(scene, camera);
+    let foco = this.ehBranco ? 0.3 : 0.0;
+    desenharCirculoEsfumado(this.x, this.y, this.tamanhoAtual, corCentro, corBorda, foco);
+  }
+  estaMorto() { return this.vida < 0; }
 }
 
-animate();
+function desenharFocoBranco(x, y, d) {
+  let corCentro = color(0, 0, 100, 255);
+  let corBorda = color(0, 0, 100, 0);
+  let pulso = (noise(tempoEfeito * 3) - 0.5) * 8;
+  desenharCirculoEsfumado(x, y, d + pulso, corCentro, corBorda, 0.4);
+}
 
-window.addEventListener('resize', () => {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    applyLayout();
-    updateRepulsion();
-});
-</script>
+function desenharCirculoEsfumado(x, y, d, c1, c2, focoIntensidade) {
+  let ctx = drawingContext;
+  let raio = d / 2;
+  if (raio <= 0.1) return;
+  let grad = ctx.createRadialGradient(x, y, 0, x, y, raio);
+  grad.addColorStop(0, c1.toString());
+  grad.addColorStop(focoIntensidade, c1.toString());
+  grad.addColorStop(1, c2.toString());
+  ctx.fillStyle = grad;
+  noStroke();
+  ellipse(x, y, d * 1.1, d * 1.1);
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+    </script>
 </body>
 </html>
